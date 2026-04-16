@@ -21,7 +21,7 @@ Before you begin, ensure you have met the following requirements:
 ### 1. Clone the Project
 
 ```bash
-git clone https://github.com/your-username/SafeNest.git
+git clone https://github.com/AZHIK/safeNest.git
 cd SafeNest
 ```
 
