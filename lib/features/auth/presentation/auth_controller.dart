@@ -1,29 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../data/auth_service.dart';
-import '../data/auth_service_impl.dart';
+import '../../../core/repositories/auth_repository.dart';
 import '../domain/auth_models.dart';
 import 'auth_state.dart';
-
-final secureStorageProvider = Provider((ref) => const FlutterSecureStorage());
-
-final authServiceProvider = Provider<AuthService>((ref) {
-  return MockAuthService();
-});
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(() {
   return AuthController();
 });
 
 class AuthController extends Notifier<AuthState> {
-  late AuthService _authService;
-  late FlutterSecureStorage _storage;
+  late AuthRepository _authRepository;
 
   @override
   AuthState build() {
-    _authService = ref.watch(authServiceProvider);
-    _storage = ref.watch(secureStorageProvider);
+    _authRepository = ref.watch(authRepositoryProvider);
 
     // Check for existing session on build
     _loadSession();
@@ -32,28 +22,30 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _loadSession() async {
-    final token = await _storage.read(key: 'auth_token');
-    final userId = await _storage.read(key: 'user_id');
-    final isAnon = await _storage.read(key: 'is_anonymous') == 'true';
-
-    if (token != null && userId != null) {
-      if (isAnon) {
-        // Clear anonymous session so it's not restored next time
-        await _storage.deleteAll();
-        return;
+    final isAuth = await _authRepository.isAuthenticated();
+    if (isAuth) {
+      try {
+        final user = await _authRepository.getCurrentUser();
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: User(
+            id: user.id,
+            phoneNumber: user.phoneNumber,
+            name: user.nickname,
+            isAnonymous: user.isAnonymous,
+          ),
+        );
+      } catch (_) {
+        // Clear invalid session
+        await _authRepository.logout();
       }
-
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: User(id: userId, isAnonymous: false),
-      );
     }
   }
 
   Future<void> requestOTP(String phoneNumber) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
-      await _authService.requestOTP(phoneNumber);
+      await _authRepository.requestOtp(phoneNumber);
       state = state.copyWith(
         status: AuthStatus.otpSent,
         phoneNumber: phoneNumber,
@@ -70,32 +62,32 @@ class AuthController extends Notifier<AuthState> {
     if (state.phoneNumber == null) return;
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
-      final session = await _authService.verifyOTP(state.phoneNumber!, code);
-
-      await _storage.write(key: 'auth_token', value: session.token);
-      await _storage.write(key: 'user_id', value: session.user.id);
-      await _storage.write(key: 'is_anonymous', value: 'false');
+      final tokenResponse = await _authRepository.verifyOtp(
+        state.phoneNumber!,
+        code,
+      );
 
       state = state.copyWith(
         status: AuthStatus.authenticated,
-        user: session.user,
+        user: User(
+          id: tokenResponse.user.id,
+          phoneNumber: tokenResponse.user.phoneNumber,
+          name: tokenResponse.user.nickname,
+          isAnonymous: tokenResponse.user.isAnonymous,
+        ),
       );
     } catch (e) {
       state = state.copyWith(status: AuthStatus.otpSent, error: e.toString());
     }
   }
 
+  /// For testing only - bypasses real auth
   Future<void> setMockAuthenticated(String phoneNumber) async {
     debugPrint('AuthController: Setting mock authenticated for $phoneNumber');
     final user = User(
       id: "mock_user_${DateTime.now().millisecondsSinceEpoch}",
       phoneNumber: phoneNumber,
     );
-
-    // We also save to storage so it survives internal router redirects
-    await _storage.write(key: 'auth_token', value: "mock_token");
-    await _storage.write(key: 'user_id', value: user.id);
-    await _storage.write(key: 'is_anonymous', value: 'false');
 
     state = state.copyWith(status: AuthStatus.authenticated, user: user);
     debugPrint(
@@ -106,13 +98,16 @@ class AuthController extends Notifier<AuthState> {
   Future<void> continueAnonymously() async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
-      final session = await _authService.continueAnonymously();
+      final session = await _authRepository.createAnonymousSession();
 
-      await _storage.write(key: 'auth_token', value: session.token);
-      await _storage.write(key: 'user_id', value: session.user.id);
-      await _storage.write(key: 'is_anonymous', value: 'true');
-
-      state = state.copyWith(status: AuthStatus.anonymous, user: session.user);
+      state = state.copyWith(
+        status: AuthStatus.anonymous,
+        user: User(
+          id: session.user.id,
+          phoneNumber: session.user.phoneNumber,
+          isAnonymous: session.user.isAnonymous,
+        ),
+      );
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
@@ -135,8 +130,7 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _authService.signOut();
-    await _storage.deleteAll();
+    await _authRepository.logout();
     state = AuthState.initial();
   }
 }

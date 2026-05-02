@@ -115,18 +115,11 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                   onPressed: authState.status == AuthStatus.loading
                       ? null
                       : () {
-                          // Bypassing requestOTP for UI building stage as requested
-                          /*
-                          if (_fullPhoneNumber.isNotEmpty) {
-                            authController.requestOTP(_fullPhoneNumber);
-                          } else if (_phoneController.text.isNotEmpty) {
-                            authController.requestOTP(_phoneController.text);
-                          }
-                          */
-
-                          if (_fullPhoneNumber.isNotEmpty ||
-                              _phoneController.text.isNotEmpty) {
-                            context.push('/otp');
+                          final phone = _fullPhoneNumber.isNotEmpty
+                              ? _fullPhoneNumber
+                              : _phoneController.text;
+                          if (phone.isNotEmpty) {
+                            authController.requestOTP(phone);
                           }
                         },
                   style: ElevatedButton.styleFrom(

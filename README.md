@@ -25,6 +25,7 @@ git clone https://github.com/AZHIK/safeNest.git
 cd SafeNest
 ```
 
+
 ### 2. Install Dependencies
 
 Fetch all necessary packages from pub.dev:

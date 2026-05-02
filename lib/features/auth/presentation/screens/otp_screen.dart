@@ -35,14 +35,7 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
   void _onOTPChanged() {
     String otp = _controllers.map((e) => e.text).join();
     if (otp.length == 6) {
-      // Bypassing verifyOTP for UI building stage
-      // ref.read(authControllerProvider.notifier).verifyOTP(otp);
-
-      // We set mock authenticated state so the router allows us to proceed
-      final mockPhone =
-          ref.read(authControllerProvider).phoneNumber ?? 'Unknown';
-      ref.read(authControllerProvider.notifier).setMockAuthenticated(mockPhone);
-      context.go('/profile-setup');
+      ref.read(authControllerProvider.notifier).verifyOTP(otp);
     }
   }
 
@@ -128,19 +121,9 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
                       : () {
                           String otp = _controllers.map((e) => e.text).join();
                           if (otp.length == 6) {
-                            // Bypassing verifyOTP for UI building stage
-                            // ref
-                            //     .read(authControllerProvider.notifier)
-                            //     .verifyOTP(otp);
-
-                            // We set mock authenticated state so the router allows us to proceed
-                            final mockPhone =
-                                ref.read(authControllerProvider).phoneNumber ??
-                                'Unknown';
                             ref
                                 .read(authControllerProvider.notifier)
-                                .setMockAuthenticated(mockPhone);
-                            context.go('/profile-setup');
+                                .verifyOTP(otp);
                           }
                         },
                   style: ElevatedButton.styleFrom(
