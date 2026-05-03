@@ -10,7 +10,7 @@ class ApiConstants {
   // Android Emulator: use 'http://10.0.2.2:8000/api/v1' (localhost on host)
   // iOS Simulator: use 'http://localhost:8000/api/v1'
   // Physical Device: use your computer's IP
-  static const String baseUrl = 'http://10.158.226.68:8000/api/v1';
+  static const String baseUrl = 'http://10.220.83.68:8000/api/v1';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/models/user_model.dart' hide User;
+import '../../../core/models/trusted_contact_model.dart' as core;
 import '../domain/auth_models.dart';
 import 'auth_state.dart';
 
@@ -116,17 +118,48 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<void> completeProfile(String name) async {
+  Future<void> completeProfile(
+    String name,
+    List<TrustedContact> contacts,
+  ) async {
     if (state.user == null) return;
 
-    final updatedUser = User(
-      id: state.user!.id,
-      phoneNumber: state.user!.phoneNumber,
-      name: name,
-      isAnonymous: state.user!.isAnonymous,
-    );
+    state = state.copyWith(status: AuthStatus.loading, error: null);
 
-    state = state.copyWith(user: updatedUser);
+    try {
+      // Update profile on backend
+      final updatedUserResponse = await _authRepository.updateProfile(
+        UserProfileUpdate(nickname: name),
+      );
+
+      // Add all trusted contacts to backend
+      for (final contact in contacts) {
+        await _authRepository.addTrustedContact(
+          core.TrustedContactCreate(
+            name: contact.name,
+            phoneNumber: contact.phoneNumber,
+          ),
+        );
+      }
+
+      // Update local state with backend response
+      final updatedUser = User(
+        id: updatedUserResponse.id,
+        phoneNumber: updatedUserResponse.phoneNumber,
+        name: updatedUserResponse.nickname,
+        isAnonymous: updatedUserResponse.isAnonymous,
+      );
+
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: updatedUser,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        error: 'Failed to save profile: ${e.toString()}',
+      );
+    }
   }
 
   Future<void> signOut() async {

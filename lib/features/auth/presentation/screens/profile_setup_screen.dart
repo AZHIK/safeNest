@@ -178,10 +178,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     if (_nameController.text.isNotEmpty) {
                       await ref
                           .read(authControllerProvider.notifier)
-                          .completeProfile(_nameController.text);
+                          .completeProfile(_nameController.text, _contacts);
                     }
                     if (context.mounted) {
-                      context.go('/home');
+                      context.go('/permissions');
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_texts.dart';
 import '../../core/localization/app_localization.dart';
+import '../../core/repositories/sos_repository.dart';
+import '../../core/models/sos_model.dart';
+import '../../services/location_service.dart';
 
 enum SosStatus { idle, sending, sent }
 
@@ -16,13 +20,81 @@ class SosScreen extends ConsumerStatefulWidget {
 
 class _SosScreenState extends ConsumerState<SosScreen> {
   SosStatus _status = SosStatus.idle;
+  String? _errorMessage;
+  SOSResponse? _sosResponse;
 
   void _triggerSos() async {
-    setState(() => _status = SosStatus.sending);
-    // Mock sending process
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() => _status = SosStatus.sent);
+    setState(() {
+      _status = SosStatus.sending;
+      _errorMessage = null;
+    });
+
+    try {
+      // Get current location
+      final locationService = ref.read(locationServiceProvider);
+      final position = await locationService.getCurrentLocation();
+
+      if (position == null) {
+        setState(() {
+          _status = SosStatus.idle;
+          _errorMessage =
+              'Could not get location. Please enable location services.';
+        });
+        return;
+      }
+
+      // Send SOS to backend
+      final sosRepo = ref.read(sosRepositoryProvider);
+      final sosData = SOSCreate(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        altitude: position.altitude,
+        speed: position.speed,
+        heading: position.heading,
+        alertType: 'manual',
+        message: 'Emergency SOS triggered',
+        clientCreatedAt: DateTime.now(),
+      );
+
+      final response = await sosRepo.triggerSOS(sosData);
+
+      if (mounted) {
+        setState(() {
+          _status = SosStatus.sent;
+          _sosResponse = response;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _status = SosStatus.idle;
+          _errorMessage = 'Failed to send SOS: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  void _cancelSos() async {
+    if (_sosResponse == null) return;
+
+    try {
+      final sosRepo = ref.read(sosRepositoryProvider);
+      await sosRepo.updateSOSStatus(
+        _sosResponse!.id,
+        SOSStatusUpdate(status: 'cancelled'),
+      );
+
+      if (mounted) {
+        setState(() => _status = SosStatus.idle);
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to cancel: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -78,15 +150,41 @@ class _SosScreenState extends ConsumerState<SosScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSizes.p48),
-                    if (_status == SosStatus.idle)
-                      _SosButton(onPressed: _triggerSos)
-                    else if (_status == SosStatus.sending)
-                      const CircularProgressIndicator(color: AppColors.error),
+                    if (_status == SosStatus.idle) ...[
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSizes.p16),
+                          child: Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontSize: AppSizes.fontSmall,
+                            ),
+                          ),
+                        ),
+                      _SosButton(onPressed: _triggerSos),
+                    ] else if (_status == SosStatus.sending)
+                      const CircularProgressIndicator(color: AppColors.error)
+                    else if (_status == SosStatus.sent)
+                      ElevatedButton.icon(
+                        onPressed: _cancelSos,
+                        icon: const Icon(Icons.cancel),
+                        label: const Text('Cancel SOS'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.success,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.p24,
+                            vertical: AppSizes.p12,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
-            _LocationIndicator(isSent: isSent),
+            _LocationIndicator(isSent: isSent, alertId: _sosResponse?.id),
           ],
         ),
       ),
@@ -184,7 +282,8 @@ class _SosButton extends StatelessWidget {
 
 class _LocationIndicator extends ConsumerWidget {
   final bool isSent;
-  const _LocationIndicator({required this.isSent});
+  final String? alertId;
+  const _LocationIndicator({required this.isSent, this.alertId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

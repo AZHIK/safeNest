@@ -1,7 +1,7 @@
 import 'base_model.dart';
 
 /// Incident Report Create Request
-/// 
+///
 /// Matches FastAPI backend IncidentReportCreate schema
 class IncidentReportCreate extends BaseModel {
   final String reportType;
@@ -45,17 +45,22 @@ class IncidentReportCreate extends BaseModel {
       'description_encrypted': descriptionEncrypted,
       'is_anonymous': isAnonymous,
       'follow_up_preference': followUpPreference,
+      'encryption_metadata': encryptionMetadata ?? {},
     };
-    if (incidentDate != null) data['incident_date'] = incidentDate!.toIso8601String();
+    if (incidentDate != null)
+      data['incident_date'] = incidentDate!.toIso8601String();
     if (incidentLatitude != null) data['incident_latitude'] = incidentLatitude;
-    if (incidentLongitude != null) data['incident_longitude'] = incidentLongitude;
+    if (incidentLongitude != null)
+      data['incident_longitude'] = incidentLongitude;
     if (incidentAddress != null) data['incident_address'] = incidentAddress;
-    if (encryptionMetadata != null) data['encryption_metadata'] = encryptionMetadata;
     if (reporterAgeRange != null) data['reporter_age_range'] = reporterAgeRange;
     if (reporterGender != null) data['reporter_gender'] = reporterGender;
-    if (contactEmailEncrypted != null) data['contact_email_encrypted'] = contactEmailEncrypted;
-    if (contactPhoneEncrypted != null) data['contact_phone_encrypted'] = contactPhoneEncrypted;
-    if (clientCreatedAt != null) data['client_created_at'] = clientCreatedAt!.toIso8601String();
+    if (contactEmailEncrypted != null)
+      data['contact_email_encrypted'] = contactEmailEncrypted;
+    if (contactPhoneEncrypted != null)
+      data['contact_phone_encrypted'] = contactPhoneEncrypted;
+    if (clientCreatedAt != null)
+      data['client_created_at'] = clientCreatedAt!.toIso8601String();
     if (offlineId != null) data['offline_id'] = offlineId;
     return data;
   }
@@ -107,7 +112,9 @@ class IncidentReportResponse extends BaseModel {
       incidentLongitude: json['incident_longitude'] as double?,
       encryptionMetadata: json['encryption_metadata'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
       clientCreatedAt: json['client_created_at'] != null
           ? DateTime.parse(json['client_created_at'] as String)
           : null,

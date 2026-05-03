@@ -76,8 +76,13 @@ class ReportRepository extends BaseRepository {
     double? gpsLongitude,
     DateTime? recordedAt,
     String? offlineId,
+    String? mimeType,
   }) async {
     return execute(() async {
+      // Determine proper file extension and content type
+      final String extension = _getFileExtension(fileType, mimeType);
+      final String contentType = mimeType ?? _getMimeType(fileType);
+
       // Use Dio directly for multipart form data
       final formData = FormData.fromMap({
         'report_id': reportId,
@@ -91,7 +96,8 @@ class ReportRepository extends BaseRepository {
         if (offlineId != null) 'offline_id': offlineId,
         'file': MultipartFile.fromBytes(
           fileData,
-          filename: 'evidence.$fileType',
+          filename: 'evidence_$reportId.$extension',
+          contentType: DioMediaType.parse(contentType),
         ),
       });
 
@@ -103,6 +109,36 @@ class ReportRepository extends BaseRepository {
         response.data as Map<String, dynamic>,
       );
     });
+  }
+
+  String _getFileExtension(String fileType, String? mimeType) {
+    switch (fileType.toLowerCase()) {
+      case 'image':
+        return mimeType == 'image/png' ? 'png' : 'jpg';
+      case 'audio':
+        return 'm4a';
+      case 'video':
+        return 'mp4';
+      case 'document':
+        return 'pdf';
+      default:
+        return 'bin';
+    }
+  }
+
+  String _getMimeType(String fileType) {
+    switch (fileType.toLowerCase()) {
+      case 'image':
+        return 'image/jpeg';
+      case 'audio':
+        return 'audio/m4a';
+      case 'video':
+        return 'video/mp4';
+      case 'document':
+        return 'application/pdf';
+      default:
+        return 'application/octet-stream';
+    }
   }
 }
 

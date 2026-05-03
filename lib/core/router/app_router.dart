@@ -7,6 +7,7 @@ import '../../features/auth/presentation/auth_state.dart';
 import '../../features/auth/presentation/screens/phone_entry_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/profile_setup_screen.dart';
+import '../../features/auth/presentation/screens/permission_request_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/domain/auth_models.dart';
 import '../../features/home/home_screen.dart';
@@ -35,7 +36,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggingIn =
           state.matchedLocation == '/phone-entry' ||
           state.matchedLocation == '/otp' ||
-          state.matchedLocation == '/profile-setup';
+          state.matchedLocation == '/profile-setup' ||
+          state.matchedLocation == '/permissions';
 
       if (!isAuth && !isLoggingIn) {
         return '/phone-entry';
@@ -52,6 +54,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: '/permissions',
+        builder: (context, state) => const PermissionRequestScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
