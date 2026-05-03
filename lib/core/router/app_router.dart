@@ -110,11 +110,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'lessons',
-                    builder: (context, state) => const LessonListScreen(),
+                    builder: (context, state) {
+                      final categoryId =
+                          state.uri.queryParameters['categoryId'];
+                      return LessonListScreen(categoryId: categoryId);
+                    },
                   ),
                   GoRoute(
                     path: 'lesson-detail',
-                    builder: (context, state) => const LessonDetailScreen(),
+                    builder: (context, state) {
+                      final lessonId = state.uri.queryParameters['id'];
+                      return LessonDetailScreen(lessonId: lessonId);
+                    },
                   ),
                 ],
               ),

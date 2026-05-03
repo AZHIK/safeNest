@@ -966,12 +966,592 @@ class SupportCentersCompanion extends UpdateCompanion<SupportCenterEntry> {
   }
 }
 
+class $TrustedContactsTable extends TrustedContacts
+    with TableInfo<$TrustedContactsTable, TrustedContactEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TrustedContactsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneNumberMeta = const VerificationMeta(
+    'phoneNumber',
+  );
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+    'phone_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _relationshipMeta = const VerificationMeta(
+    'relationship',
+  );
+  @override
+  late final GeneratedColumn<String> relationship = GeneratedColumn<String>(
+    'relationship',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _priorityMeta = const VerificationMeta(
+    'priority',
+  );
+  @override
+  late final GeneratedColumn<int> priority = GeneratedColumn<int>(
+    'priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notifySmsMeta = const VerificationMeta(
+    'notifySms',
+  );
+  @override
+  late final GeneratedColumn<bool> notifySms = GeneratedColumn<bool>(
+    'notify_sms',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notify_sms" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _notifyPushMeta = const VerificationMeta(
+    'notifyPush',
+  );
+  @override
+  late final GeneratedColumn<bool> notifyPush = GeneratedColumn<bool>(
+    'notify_push',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("notify_push" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _isVerifiedMeta = const VerificationMeta(
+    'isVerified',
+  );
+  @override
+  late final GeneratedColumn<bool> isVerified = GeneratedColumn<bool>(
+    'is_verified',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_verified" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    phoneNumber,
+    relationship,
+    priority,
+    notifySms,
+    notifyPush,
+    isVerified,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trusted_contacts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TrustedContactEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+        _phoneNumberMeta,
+        phoneNumber.isAcceptableOrUnknown(
+          data['phone_number']!,
+          _phoneNumberMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_phoneNumberMeta);
+    }
+    if (data.containsKey('relationship')) {
+      context.handle(
+        _relationshipMeta,
+        relationship.isAcceptableOrUnknown(
+          data['relationship']!,
+          _relationshipMeta,
+        ),
+      );
+    }
+    if (data.containsKey('priority')) {
+      context.handle(
+        _priorityMeta,
+        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_priorityMeta);
+    }
+    if (data.containsKey('notify_sms')) {
+      context.handle(
+        _notifySmsMeta,
+        notifySms.isAcceptableOrUnknown(data['notify_sms']!, _notifySmsMeta),
+      );
+    }
+    if (data.containsKey('notify_push')) {
+      context.handle(
+        _notifyPushMeta,
+        notifyPush.isAcceptableOrUnknown(data['notify_push']!, _notifyPushMeta),
+      );
+    }
+    if (data.containsKey('is_verified')) {
+      context.handle(
+        _isVerifiedMeta,
+        isVerified.isAcceptableOrUnknown(data['is_verified']!, _isVerifiedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TrustedContactEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrustedContactEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      phoneNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone_number'],
+      )!,
+      relationship: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}relationship'],
+      ),
+      priority: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}priority'],
+      )!,
+      notifySms: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notify_sms'],
+      )!,
+      notifyPush: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}notify_push'],
+      )!,
+      isVerified: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_verified'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TrustedContactsTable createAlias(String alias) {
+    return $TrustedContactsTable(attachedDatabase, alias);
+  }
+}
+
+class TrustedContactEntry extends DataClass
+    implements Insertable<TrustedContactEntry> {
+  final String id;
+  final String name;
+  final String phoneNumber;
+  final String? relationship;
+  final int priority;
+  final bool notifySms;
+  final bool notifyPush;
+  final bool isVerified;
+  final DateTime createdAt;
+  const TrustedContactEntry({
+    required this.id,
+    required this.name,
+    required this.phoneNumber,
+    this.relationship,
+    required this.priority,
+    required this.notifySms,
+    required this.notifyPush,
+    required this.isVerified,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['phone_number'] = Variable<String>(phoneNumber);
+    if (!nullToAbsent || relationship != null) {
+      map['relationship'] = Variable<String>(relationship);
+    }
+    map['priority'] = Variable<int>(priority);
+    map['notify_sms'] = Variable<bool>(notifySms);
+    map['notify_push'] = Variable<bool>(notifyPush);
+    map['is_verified'] = Variable<bool>(isVerified);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  TrustedContactsCompanion toCompanion(bool nullToAbsent) {
+    return TrustedContactsCompanion(
+      id: Value(id),
+      name: Value(name),
+      phoneNumber: Value(phoneNumber),
+      relationship: relationship == null && nullToAbsent
+          ? const Value.absent()
+          : Value(relationship),
+      priority: Value(priority),
+      notifySms: Value(notifySms),
+      notifyPush: Value(notifyPush),
+      isVerified: Value(isVerified),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory TrustedContactEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrustedContactEntry(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
+      relationship: serializer.fromJson<String?>(json['relationship']),
+      priority: serializer.fromJson<int>(json['priority']),
+      notifySms: serializer.fromJson<bool>(json['notifySms']),
+      notifyPush: serializer.fromJson<bool>(json['notifyPush']),
+      isVerified: serializer.fromJson<bool>(json['isVerified']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'phoneNumber': serializer.toJson<String>(phoneNumber),
+      'relationship': serializer.toJson<String?>(relationship),
+      'priority': serializer.toJson<int>(priority),
+      'notifySms': serializer.toJson<bool>(notifySms),
+      'notifyPush': serializer.toJson<bool>(notifyPush),
+      'isVerified': serializer.toJson<bool>(isVerified),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  TrustedContactEntry copyWith({
+    String? id,
+    String? name,
+    String? phoneNumber,
+    Value<String?> relationship = const Value.absent(),
+    int? priority,
+    bool? notifySms,
+    bool? notifyPush,
+    bool? isVerified,
+    DateTime? createdAt,
+  }) => TrustedContactEntry(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    phoneNumber: phoneNumber ?? this.phoneNumber,
+    relationship: relationship.present ? relationship.value : this.relationship,
+    priority: priority ?? this.priority,
+    notifySms: notifySms ?? this.notifySms,
+    notifyPush: notifyPush ?? this.notifyPush,
+    isVerified: isVerified ?? this.isVerified,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  TrustedContactEntry copyWithCompanion(TrustedContactsCompanion data) {
+    return TrustedContactEntry(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      phoneNumber: data.phoneNumber.present
+          ? data.phoneNumber.value
+          : this.phoneNumber,
+      relationship: data.relationship.present
+          ? data.relationship.value
+          : this.relationship,
+      priority: data.priority.present ? data.priority.value : this.priority,
+      notifySms: data.notifySms.present ? data.notifySms.value : this.notifySms,
+      notifyPush: data.notifyPush.present
+          ? data.notifyPush.value
+          : this.notifyPush,
+      isVerified: data.isVerified.present
+          ? data.isVerified.value
+          : this.isVerified,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrustedContactEntry(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('relationship: $relationship, ')
+          ..write('priority: $priority, ')
+          ..write('notifySms: $notifySms, ')
+          ..write('notifyPush: $notifyPush, ')
+          ..write('isVerified: $isVerified, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    phoneNumber,
+    relationship,
+    priority,
+    notifySms,
+    notifyPush,
+    isVerified,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrustedContactEntry &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.phoneNumber == this.phoneNumber &&
+          other.relationship == this.relationship &&
+          other.priority == this.priority &&
+          other.notifySms == this.notifySms &&
+          other.notifyPush == this.notifyPush &&
+          other.isVerified == this.isVerified &&
+          other.createdAt == this.createdAt);
+}
+
+class TrustedContactsCompanion extends UpdateCompanion<TrustedContactEntry> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> phoneNumber;
+  final Value<String?> relationship;
+  final Value<int> priority;
+  final Value<bool> notifySms;
+  final Value<bool> notifyPush;
+  final Value<bool> isVerified;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const TrustedContactsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.relationship = const Value.absent(),
+    this.priority = const Value.absent(),
+    this.notifySms = const Value.absent(),
+    this.notifyPush = const Value.absent(),
+    this.isVerified = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrustedContactsCompanion.insert({
+    required String id,
+    required String name,
+    required String phoneNumber,
+    this.relationship = const Value.absent(),
+    required int priority,
+    this.notifySms = const Value.absent(),
+    this.notifyPush = const Value.absent(),
+    this.isVerified = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       phoneNumber = Value(phoneNumber),
+       priority = Value(priority),
+       createdAt = Value(createdAt);
+  static Insertable<TrustedContactEntry> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? phoneNumber,
+    Expression<String>? relationship,
+    Expression<int>? priority,
+    Expression<bool>? notifySms,
+    Expression<bool>? notifyPush,
+    Expression<bool>? isVerified,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (relationship != null) 'relationship': relationship,
+      if (priority != null) 'priority': priority,
+      if (notifySms != null) 'notify_sms': notifySms,
+      if (notifyPush != null) 'notify_push': notifyPush,
+      if (isVerified != null) 'is_verified': isVerified,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrustedContactsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? phoneNumber,
+    Value<String?>? relationship,
+    Value<int>? priority,
+    Value<bool>? notifySms,
+    Value<bool>? notifyPush,
+    Value<bool>? isVerified,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return TrustedContactsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      relationship: relationship ?? this.relationship,
+      priority: priority ?? this.priority,
+      notifySms: notifySms ?? this.notifySms,
+      notifyPush: notifyPush ?? this.notifyPush,
+      isVerified: isVerified ?? this.isVerified,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (relationship.present) {
+      map['relationship'] = Variable<String>(relationship.value);
+    }
+    if (priority.present) {
+      map['priority'] = Variable<int>(priority.value);
+    }
+    if (notifySms.present) {
+      map['notify_sms'] = Variable<bool>(notifySms.value);
+    }
+    if (notifyPush.present) {
+      map['notify_push'] = Variable<bool>(notifyPush.value);
+    }
+    if (isVerified.present) {
+      map['is_verified'] = Variable<bool>(isVerified.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrustedContactsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('relationship: $relationship, ')
+          ..write('priority: $priority, ')
+          ..write('notifySms: $notifySms, ')
+          ..write('notifyPush: $notifyPush, ')
+          ..write('isVerified: $isVerified, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $MessagesTable messages = $MessagesTable(this);
   late final $LessonsTable lessons = $LessonsTable(this);
   late final $SupportCentersTable supportCenters = $SupportCentersTable(this);
+  late final $TrustedContactsTable trustedContacts = $TrustedContactsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -980,6 +1560,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     messages,
     lessons,
     supportCenters,
+    trustedContacts,
   ];
 }
 
@@ -1534,6 +2115,300 @@ typedef $$SupportCentersTableProcessedTableManager =
       SupportCenterEntry,
       PrefetchHooks Function()
     >;
+typedef $$TrustedContactsTableCreateCompanionBuilder =
+    TrustedContactsCompanion Function({
+      required String id,
+      required String name,
+      required String phoneNumber,
+      Value<String?> relationship,
+      required int priority,
+      Value<bool> notifySms,
+      Value<bool> notifyPush,
+      Value<bool> isVerified,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$TrustedContactsTableUpdateCompanionBuilder =
+    TrustedContactsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> phoneNumber,
+      Value<String?> relationship,
+      Value<int> priority,
+      Value<bool> notifySms,
+      Value<bool> notifyPush,
+      Value<bool> isVerified,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$TrustedContactsTableFilterComposer
+    extends Composer<_$AppDatabase, $TrustedContactsTable> {
+  $$TrustedContactsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notifySms => $composableBuilder(
+    column: $table.notifySms,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get notifyPush => $composableBuilder(
+    column: $table.notifyPush,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TrustedContactsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TrustedContactsTable> {
+  $$TrustedContactsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get notifySms => $composableBuilder(
+    column: $table.notifySms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get notifyPush => $composableBuilder(
+    column: $table.notifyPush,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TrustedContactsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TrustedContactsTable> {
+  $$TrustedContactsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
+
+  GeneratedColumn<bool> get notifySms =>
+      $composableBuilder(column: $table.notifySms, builder: (column) => column);
+
+  GeneratedColumn<bool> get notifyPush => $composableBuilder(
+    column: $table.notifyPush,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isVerified => $composableBuilder(
+    column: $table.isVerified,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$TrustedContactsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TrustedContactsTable,
+          TrustedContactEntry,
+          $$TrustedContactsTableFilterComposer,
+          $$TrustedContactsTableOrderingComposer,
+          $$TrustedContactsTableAnnotationComposer,
+          $$TrustedContactsTableCreateCompanionBuilder,
+          $$TrustedContactsTableUpdateCompanionBuilder,
+          (
+            TrustedContactEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $TrustedContactsTable,
+              TrustedContactEntry
+            >,
+          ),
+          TrustedContactEntry,
+          PrefetchHooks Function()
+        > {
+  $$TrustedContactsTableTableManager(
+    _$AppDatabase db,
+    $TrustedContactsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TrustedContactsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TrustedContactsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TrustedContactsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> phoneNumber = const Value.absent(),
+                Value<String?> relationship = const Value.absent(),
+                Value<int> priority = const Value.absent(),
+                Value<bool> notifySms = const Value.absent(),
+                Value<bool> notifyPush = const Value.absent(),
+                Value<bool> isVerified = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrustedContactsCompanion(
+                id: id,
+                name: name,
+                phoneNumber: phoneNumber,
+                relationship: relationship,
+                priority: priority,
+                notifySms: notifySms,
+                notifyPush: notifyPush,
+                isVerified: isVerified,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String phoneNumber,
+                Value<String?> relationship = const Value.absent(),
+                required int priority,
+                Value<bool> notifySms = const Value.absent(),
+                Value<bool> notifyPush = const Value.absent(),
+                Value<bool> isVerified = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TrustedContactsCompanion.insert(
+                id: id,
+                name: name,
+                phoneNumber: phoneNumber,
+                relationship: relationship,
+                priority: priority,
+                notifySms: notifySms,
+                notifyPush: notifyPush,
+                isVerified: isVerified,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TrustedContactsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TrustedContactsTable,
+      TrustedContactEntry,
+      $$TrustedContactsTableFilterComposer,
+      $$TrustedContactsTableOrderingComposer,
+      $$TrustedContactsTableAnnotationComposer,
+      $$TrustedContactsTableCreateCompanionBuilder,
+      $$TrustedContactsTableUpdateCompanionBuilder,
+      (
+        TrustedContactEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $TrustedContactsTable,
+          TrustedContactEntry
+        >,
+      ),
+      TrustedContactEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1544,4 +2419,6 @@ class $AppDatabaseManager {
       $$LessonsTableTableManager(_db, _db.lessons);
   $$SupportCentersTableTableManager get supportCenters =>
       $$SupportCentersTableTableManager(_db, _db.supportCenters);
+  $$TrustedContactsTableTableManager get trustedContacts =>
+      $$TrustedContactsTableTableManager(_db, _db.trustedContacts);
 }

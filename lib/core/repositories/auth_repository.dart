@@ -7,17 +7,22 @@ import '../models/auth_model.dart';
 import '../models/user_model.dart';
 import '../models/trusted_contact_model.dart';
 import '../services/token_storage_service.dart';
+import '../database/app_database.dart';
 import 'base_repository.dart';
 
 /// Auth Repository
 ///
 /// Handles OTP authentication, token management, and user profile operations.
 /// Uses secure storage for token persistence via TokenStorageService.
+/// Also manages trusted contacts with local database caching.
 class AuthRepository extends BaseRepository {
   final ApiClient _apiClient;
   final TokenStorageService _tokenStorage;
+  final AppDatabase _database;
 
-  AuthRepository(this._apiClient) : _tokenStorage = TokenStorageService();
+  AuthRepository(this._apiClient)
+    : _tokenStorage = TokenStorageService(),
+      _database = AppDatabase();
 
   /// Request OTP for phone verification
   Future<Map<String, dynamic>> requestOtp(
@@ -134,33 +139,87 @@ class AuthRepository extends BaseRepository {
     });
   }
 
-  /// Get trusted contacts
+  /// Get trusted contacts from API with local fallback
   Future<List<TrustedContact>> getTrustedContacts() async {
-    return execute(() async {
-      final response = await _apiClient.get(ApiConstants.trustedContacts);
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((e) => TrustedContact.fromJson(e as Map<String, dynamic>))
-          .toList();
-    });
+    return executeWithFallback(
+      apiCall: () async {
+        final response = await _apiClient.get(ApiConstants.trustedContacts);
+        final List<dynamic> data = response.data as List<dynamic>;
+        final contacts = data
+            .map((e) => TrustedContact.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        // Save to local database
+        await _database.replaceAllTrustedContacts(
+          contacts.map((c) => _toDbEntry(c)).toList(),
+        );
+
+        return contacts;
+      },
+      localFallback: () async {
+        // Return cached contacts from local database
+        final entries = await _database.getAllTrustedContacts();
+        return entries.map((e) => _fromDbEntry(e)).toList();
+      },
+    );
   }
 
-  /// Add trusted contact
+  /// Add trusted contact - saves to API and local database
   Future<TrustedContact> addTrustedContact(TrustedContactCreate contact) async {
     return execute(() async {
       final response = await _apiClient.post(
         ApiConstants.trustedContacts,
         data: contact.toJson(),
       );
-      return TrustedContact.fromJson(response.data as Map<String, dynamic>);
+      final newContact = TrustedContact.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+
+      // Save to local database
+      await _database.insertTrustedContact(_toDbEntry(newContact));
+
+      return newContact;
     });
   }
 
-  /// Remove trusted contact
+  /// Remove trusted contact - removes from API and local database
   Future<void> removeTrustedContact(String contactId) async {
     return execute(() async {
       await _apiClient.delete('${ApiConstants.trustedContacts}/$contactId');
+
+      // Remove from local database
+      await _database.deleteTrustedContact(contactId);
     });
+  }
+
+  /// Convert database entry to TrustedContact model
+  TrustedContact _fromDbEntry(TrustedContactEntry entry) {
+    return TrustedContact(
+      id: entry.id,
+      name: entry.name,
+      phoneNumber: entry.phoneNumber,
+      relationship: entry.relationship,
+      priority: entry.priority,
+      notifySms: entry.notifySms,
+      notifyPush: entry.notifyPush,
+      isVerified: entry.isVerified,
+      createdAt: entry.createdAt,
+    );
+  }
+
+  /// Convert TrustedContact model to database entry
+  TrustedContactEntry _toDbEntry(TrustedContact contact) {
+    return TrustedContactEntry(
+      id: contact.id,
+      name: contact.name,
+      phoneNumber: contact.phoneNumber,
+      relationship: contact.relationship,
+      priority: contact.priority,
+      notifySms: contact.notifySms,
+      notifyPush: contact.notifyPush,
+      isVerified: contact.isVerified,
+      createdAt: contact.createdAt,
+    );
   }
 
   /// Logout - clear tokens and notify backend

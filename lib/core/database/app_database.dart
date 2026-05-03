@@ -34,12 +34,60 @@ class SupportCenters extends Table {
   RealColumn get longitude => real()();
 }
 
-@DriftDatabase(tables: [Messages, Lessons, SupportCenters])
+@DataClassName('TrustedContactEntry')
+class TrustedContacts extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get phoneNumber => text()();
+  TextColumn get relationship => text().nullable()();
+  IntColumn get priority => integer()();
+  BoolColumn get notifySms => boolean().withDefault(const Constant(true))();
+  BoolColumn get notifyPush => boolean().withDefault(const Constant(true))();
+  BoolColumn get isVerified => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Messages, Lessons, SupportCenters, TrustedContacts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  // ========== Trusted Contacts ==========
+
+  /// Get all trusted contacts from local database
+  Future<List<TrustedContactEntry>> getAllTrustedContacts() async {
+    return await select(trustedContacts).get();
+  }
+
+  /// Insert or update a trusted contact
+  Future<void> insertTrustedContact(TrustedContactEntry contact) async {
+    await into(trustedContacts).insertOnConflictUpdate(contact);
+  }
+
+  /// Insert multiple trusted contacts (replaces all)
+  Future<void> replaceAllTrustedContacts(
+    List<TrustedContactEntry> contacts,
+  ) async {
+    await delete(trustedContacts).go();
+    for (final contact in contacts) {
+      await into(trustedContacts).insert(contact);
+    }
+  }
+
+  /// Delete a trusted contact by ID
+  Future<void> deleteTrustedContact(String id) async {
+    await (delete(trustedContacts)..where((c) => c.id.equals(id))).go();
+  }
+
+  /// Clear all trusted contacts
+  Future<void> clearTrustedContacts() async {
+    await delete(trustedContacts).go();
+  }
 }
 
 LazyDatabase _openConnection() {
