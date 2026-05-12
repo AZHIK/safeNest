@@ -40,16 +40,36 @@ class MapScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _launchPhone(String? phone) async {
+  Future<void> _launchPhone(BuildContext context, String? phone) async {
     if (phone == null) return;
     final url = Uri.parse('tel:$phone');
     if (await canLaunchUrl(url)) {
-      await launchUrl(url);
+      final launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        // Show error if launch failed
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open dialer app')),
+          );
+        }
+      }
+    } else {
+      // Show error if no app can handle the URL
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No dialer app found on this device')),
+        );
+      }
     }
   }
 
   Future<void> _launchMaps(double lat, double lng) async {
-    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    final url = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
@@ -68,12 +88,12 @@ class MapScreen extends ConsumerWidget {
           Builder(
             builder: (context) {
               final centers = centersAsync.value ?? [];
-              
+
               // Default to Dar es Salaam if no centers to center around
-              final initialPos = centers.isNotEmpty 
-                ? LatLng(centers.first.latitude, centers.first.longitude)
-                : const LatLng(-6.7924, 39.2083); 
-              
+              final initialPos = centers.isNotEmpty
+                  ? LatLng(centers.first.latitude, centers.first.longitude)
+                  : const LatLng(-6.7924, 39.2083);
+
               return GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: initialPos,
@@ -82,13 +102,20 @@ class MapScreen extends ConsumerWidget {
                 myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
-                markers: centers.map((c) => Marker(
-                  markerId: MarkerId(c.id),
-                  position: LatLng(c.latitude, c.longitude),
-                  infoWindow: InfoWindow(title: c.name, snippet: c.phonePrimary),
-                )).toSet(),
+                markers: centers
+                    .map(
+                      (c) => Marker(
+                        markerId: MarkerId(c.id),
+                        position: LatLng(c.latitude, c.longitude),
+                        infoWindow: InfoWindow(
+                          title: c.name,
+                          snippet: c.phonePrimary,
+                        ),
+                      ),
+                    )
+                    .toSet(),
               );
-            }
+            },
           ),
 
           // Header / Search area
@@ -174,7 +201,9 @@ class MapScreen extends ConsumerWidget {
                       child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(AppSizes.p16),
-                          child: Text(AppTranslations.get('noCentersFound', lang)), // Or a specific "No centers found"
+                          child: Text(
+                            AppTranslations.get('noCentersFound', lang),
+                          ), // Or a specific "No centers found"
                         ),
                       ),
                     );
@@ -182,7 +211,9 @@ class MapScreen extends ConsumerWidget {
 
                   return ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p16,
+                    ),
                     itemCount: centers.length,
                     itemBuilder: (context, index) {
                       final center = centers[index];
@@ -192,7 +223,9 @@ class MapScreen extends ConsumerWidget {
                         margin: const EdgeInsets.only(right: AppSizes.p12),
                         child: Card(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.radius16),
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radius16,
+                            ),
                           ),
                           elevation: 8,
                           child: Padding(
@@ -202,7 +235,10 @@ class MapScreen extends ConsumerWidget {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(_getIconForType(center.centerType), color: AppColors.primary),
+                                    Icon(
+                                      _getIconForType(center.centerType),
+                                      color: AppColors.primary,
+                                    ),
                                     const SizedBox(width: AppSizes.p8),
                                     Expanded(
                                       child: Text(
@@ -229,14 +265,20 @@ class MapScreen extends ConsumerWidget {
                                   children: [
                                     Expanded(
                                       child: OutlinedButton.icon(
-                                        onPressed: center.phonePrimary != null 
-                                          ? () => _launchPhone(center.phonePrimary)
-                                          : null,
+                                        onPressed: center.phonePrimary != null
+                                            ? () => _launchPhone(
+                                                context,
+                                                center.phonePrimary,
+                                              )
+                                            : null,
                                         icon: const Icon(Icons.call, size: 18),
                                         label: FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: Text(
-                                            AppTranslations.get('callButton', lang),
+                                            AppTranslations.get(
+                                              'callButton',
+                                              lang,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -244,7 +286,10 @@ class MapScreen extends ConsumerWidget {
                                     const SizedBox(width: AppSizes.p8),
                                     Expanded(
                                       child: ElevatedButton.icon(
-                                        onPressed: () => _launchMaps(center.latitude, center.longitude),
+                                        onPressed: () => _launchMaps(
+                                          center.latitude,
+                                          center.longitude,
+                                        ),
                                         icon: const Icon(
                                           Icons.directions,
                                           size: 18,

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_texts.dart';
@@ -12,6 +14,7 @@ import '../../core/localization/app_localization.dart';
 import '../../core/repositories/report_repository.dart';
 import '../../core/models/report_model.dart';
 import '../../services/location_service.dart';
+import '../../services/audio_recording_service.dart';
 
 enum ReportStatus { idle, submitting, success, error }
 
@@ -30,10 +33,25 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
   final TextEditingController _reportController = TextEditingController();
   final List<EvidenceFile> _evidenceFiles = [];
   final ImagePicker _imagePicker = ImagePicker();
+  final AudioRecordingService _audioService = AudioRecordingService();
+  final FlutterSoundPlayer _audioPlayer = FlutterSoundPlayer();
+
+  bool _isRecording = false;
+  DateTime? _recordingStartTime;
+  String? _currentRecordingPath;
+  String? _currentlyPlayingPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer.openPlayer();
+  }
 
   @override
   void dispose() {
     _reportController.dispose();
+    _audioService.dispose();
+    _audioPlayer.closePlayer();
     super.dispose();
   }
 
@@ -58,10 +76,105 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
   }
 
   Future<void> _recordAudio() async {
-    // TODO: Implement audio recording
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Audio recording not yet implemented')),
-    );
+    if (_isRecording) {
+      // Stop recording
+      try {
+        final recordingPath = await _audioService.stopRecording();
+
+        // Read the audio file bytes
+        final file = File(recordingPath);
+        final bytes = await file.readAsBytes();
+
+        setState(() {
+          _isRecording = false;
+          _recordingStartTime = null;
+          _currentRecordingPath = null;
+          _evidenceFiles.add(
+            EvidenceFile(
+              name: 'audio_${DateTime.now().millisecondsSinceEpoch}.wav',
+              bytes: bytes,
+              type: 'audio',
+              mimeType: 'audio/wav',
+              path: recordingPath,
+            ),
+          );
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio recorded successfully')),
+        );
+      } catch (e) {
+        setState(() {
+          _isRecording = false;
+          _recordingStartTime = null;
+          _currentRecordingPath = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save recording: ${e.toString()}')),
+        );
+      }
+    } else {
+      // Start recording
+      try {
+        // Request permission
+        final status = await Permission.microphone.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Microphone permission is required to record audio',
+              ),
+            ),
+          );
+          return;
+        }
+
+        final recordingPath = await _audioService.startRecording();
+
+        setState(() {
+          _isRecording = true;
+          _recordingStartTime = DateTime.now();
+          _currentRecordingPath = recordingPath;
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Recording started...')));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start recording: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _playAudio(String path) async {
+    try {
+      if (_currentlyPlayingPath == path) {
+        // Pause if playing the same audio
+        await _audioPlayer.pausePlayer();
+        setState(() => _currentlyPlayingPath = null);
+      } else {
+        // Play new audio without specifying codec
+        await _audioPlayer.startPlayer(fromURI: path);
+        setState(() => _currentlyPlayingPath = path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to play audio: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _cancelRecording() async {
+    if (_isRecording) {
+      await _audioService.cancelRecording();
+      setState(() {
+        _isRecording = false;
+        _recordingStartTime = null;
+        _currentRecordingPath = null;
+      });
+    }
   }
 
   void _removeEvidence(int index) {
@@ -224,17 +337,66 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
                 const SizedBox(width: AppSizes.p12),
                 Expanded(
                   child: _EvidenceButton(
-                    icon: Icons.mic_none,
-                    label: lang == AppLanguage.english
-                        ? 'Record Audio'
-                        : 'Rekodi Sauti',
+                    icon: _isRecording ? Icons.stop : Icons.mic_none,
+                    label: _isRecording
+                        ? (lang == AppLanguage.english
+                              ? 'Stop Recording'
+                              : 'Acha Kurekodi')
+                        : (lang == AppLanguage.english
+                              ? 'Record Audio'
+                              : 'Rekodi Sauti'),
                     onTap: _status == ReportStatus.submitting
                         ? null
                         : _recordAudio,
+                    isRecording: _isRecording,
                   ),
                 ),
               ],
             ),
+
+            // Recording indicator
+            if (_isRecording) ...[
+              const SizedBox(height: AppSizes.p16),
+              Container(
+                padding: const EdgeInsets.all(AppSizes.p16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radius12),
+                  border: Border.all(color: Colors.red),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.p12),
+                    Expanded(
+                      child: Text(
+                        lang == AppLanguage.english
+                            ? 'Recording in progress...'
+                            : 'Inarekodi...',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _cancelRecording,
+                      child: Text(
+                        lang == AppLanguage.english ? 'Cancel' : 'Ghairi',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: AppSizes.p24),
 
             // Evidence Files List
@@ -262,18 +424,35 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
                     subtitle: Text(
                       '${(entry.value.bytes.length / 1024).toStringAsFixed(1)} KB',
                     ),
-                    trailing: _status == ReportStatus.idle
-                        ? IconButton(
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (entry.value.type == 'audio' &&
+                            _status == ReportStatus.idle)
+                          IconButton(
+                            icon: Icon(
+                              _currentlyPlayingPath == entry.value.path
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: AppColors.primary,
+                            ),
+                            onPressed: () => _playAudio(entry.value.path),
+                          ),
+                        if (_status == ReportStatus.idle)
+                          IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _removeEvidence(entry.key),
                           )
-                        : entry.value.uploaded
-                        ? const Icon(Icons.check_circle, color: Colors.green)
-                        : const SizedBox(
+                        else if (entry.value.uploaded)
+                          const Icon(Icons.check_circle, color: Colors.green)
+                        else
+                          const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -374,8 +553,14 @@ class _EvidenceButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
+  final bool isRecording;
 
-  const _EvidenceButton({required this.icon, required this.label, this.onTap});
+  const _EvidenceButton({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.isRecording = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -387,23 +572,31 @@ class _EvidenceButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isDisabled ? Colors.grey[200]! : Colors.grey[300]!,
+            color: isRecording
+                ? Colors.red
+                : (isDisabled ? Colors.grey[200]! : Colors.grey[300]!),
           ),
           borderRadius: BorderRadius.circular(AppSizes.radius12),
-          color: isDisabled ? Colors.grey[50] : null,
+          color: isRecording
+              ? Colors.red.withValues(alpha: 0.1)
+              : (isDisabled ? Colors.grey[50] : null),
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              color: isDisabled ? Colors.grey[400] : AppColors.primary,
+              color: isRecording
+                  ? Colors.red
+                  : (isDisabled ? Colors.grey[400] : AppColors.primary),
             ),
             const SizedBox(height: AppSizes.p4),
             Text(
               label,
               style: TextStyle(
                 fontSize: AppSizes.fontSmall,
-                color: isDisabled ? Colors.grey[400] : null,
+                color: isRecording
+                    ? Colors.red
+                    : (isDisabled ? Colors.grey[400] : null),
               ),
             ),
           ],

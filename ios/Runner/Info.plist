@@ -51,6 +51,9 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<!-- Microphone permission for audio recording -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to record audio evidence for incident reports.</string>
 	<!-- Keychain configuration for secure storage - data tied to app bundle -->
 	<key>keychain-access-groups</key>
 	<array>
