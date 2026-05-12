@@ -187,6 +187,7 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
             TextField(
               controller: _reportController,
               maxLines: 8,
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: lang == AppLanguage.english
                     ? 'Describe what happened...'
