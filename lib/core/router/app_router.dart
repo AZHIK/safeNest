@@ -22,23 +22,41 @@ import '../../features/messaging/chat_detail_screen.dart';
 import '../../features/contacts/contacts_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/shared/main_layout.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/splash',
     refreshListenable: _RouterRefreshListenable(ref),
     redirect: (context, state) {
       final authState = ref.read(authControllerProvider);
+      final isLoading = authState.status == AuthStatus.loading;
       final isAuth =
           authState.status == AuthStatus.authenticated ||
           authState.status == AuthStatus.anonymous;
 
+      final isSplash = state.matchedLocation == '/splash';
       final isLoggingIn =
           state.matchedLocation == '/phone-entry' ||
           state.matchedLocation == '/otp' ||
           state.matchedLocation == '/profile-setup' ||
           state.matchedLocation == '/permissions';
 
+      // Stay on splash or login screens while any loading is in progress.
+      // Do NOT redirect away from auth screens during in-flight API calls
+      // (e.g. OTP request, OTP verify) — those screens manage their own loading UI.
+      if (isLoading) {
+        if (isSplash || isLoggingIn) return null;
+        // Only non-auth, non-splash screens get sent to splash during startup
+        return '/splash';
+      }
+
+      // Authenticated: leave splash/login screens → go to home
+      if (isAuth && (isSplash || isLoggingIn)) {
+        return '/home';
+      }
+
+      // Unauthenticated: leave splash/app screens → go to phone-entry
       if (!isAuth && !isLoggingIn) {
         return '/phone-entry';
       }
@@ -46,6 +64,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/phone-entry',
         builder: (context, state) => const PhoneEntryScreen(),

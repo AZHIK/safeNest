@@ -10,7 +10,9 @@
     <application
         android:label="SafeNest"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -38,6 +40,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        
+        <!-- TODO: Paste your Google Maps API Key below -->
+        <meta-data android:name="com.google.android.geo.API_KEY"
+                   android:value="AIzaSyA2BASqFEsyEhzIJsj5wdejUBPpL5g_wqc"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

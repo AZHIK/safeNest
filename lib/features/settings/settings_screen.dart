@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/localization/language_toggle.dart';
+import '../auth/presentation/auth_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -56,7 +57,33 @@ class SettingsScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
             child: TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Sign Out'),
+                    content: const Text(
+                      'Are you sure you want to sign out? You will need to verify your phone number again to log back in.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text(
+                          'Sign Out',
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await ref.read(authControllerProvider.notifier).signOut();
+                }
+              },
               child: Text(
                 AppTranslations.get('logoutButton', lang),
                 style: const TextStyle(color: AppColors.error),

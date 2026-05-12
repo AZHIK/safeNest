@@ -73,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Request OTP for phone number
   Future<Map<String, dynamic>> requestOtp(
     String phoneNumber, {
-    String countryCode = '+1',
+    String countryCode = '+255',
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -81,7 +81,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
         phoneNumber,
         countryCode: countryCode,
       );
-      state = state.copyWith(isLoading: false);
+      
+      if (result['is_authenticated'] == true) {
+        final tokenData = result['token_data'] as Map<String, dynamic>;
+        final tokenResponse = TokenResponse.fromJson(tokenData);
+        state = state.copyWith(
+          user: tokenResponse.user,
+          isAuthenticated: true,
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
+      
       return result;
     } catch (e) {
       state = state.copyWith(

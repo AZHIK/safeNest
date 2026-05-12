@@ -20,34 +20,93 @@ class AuthController extends Notifier<AuthState> {
     // Check for existing session on build
     _loadSession();
 
-    return AuthState.initial();
+    return AuthState(status: AuthStatus.loading);
   }
 
   Future<void> _loadSession() async {
-    final isAuth = await _authRepository.isAuthenticated();
-    if (isAuth) {
-      try {
-        final user = await _authRepository.getCurrentUser();
-        state = state.copyWith(
-          status: AuthStatus.authenticated,
-          user: User(
-            id: user.id,
-            phoneNumber: user.phoneNumber,
-            name: user.nickname,
-            isAnonymous: user.isAnonymous,
-          ),
-        );
-      } catch (_) {
-        // Clear invalid session
-        await _authRepository.logout();
+    try {
+      final isAuth = await _authRepository.isAuthenticated();
+      if (isAuth) {
+        try {
+          // Attempt to fetch current user with valid token
+          final user = await _authRepository.getCurrentUser();
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: User(
+              id: user.id,
+              phoneNumber: user.phoneNumber,
+              name: user.nickname,
+              isAnonymous: user.isAnonymous,
+            ),
+          );
+        } catch (e) {
+          // Token exists but fetching user failed
+          // Try silent refresh before giving up
+          try {
+            await _authRepository.refreshAccessToken();
+            // Retry user fetch after successful refresh
+            final user = await _authRepository.getCurrentUser();
+            state = state.copyWith(
+              status: AuthStatus.authenticated,
+              user: User(
+                id: user.id,
+                phoneNumber: user.phoneNumber,
+                name: user.nickname,
+                isAnonymous: user.isAnonymous,
+              ),
+            );
+          } catch (_) {
+            // Refresh also failed - clear tokens and go to login
+            await _authRepository.clearStoredTokens();
+            state = state.copyWith(status: AuthStatus.unauthenticated);
+          }
+        }
+      } else {
+        // Not authenticated - check if we can refresh
+        try {
+          await _authRepository.refreshAccessToken();
+          // Refresh succeeded - fetch user
+          final user = await _authRepository.getCurrentUser();
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: User(
+              id: user.id,
+              phoneNumber: user.phoneNumber,
+              name: user.nickname,
+              isAnonymous: user.isAnonymous,
+            ),
+          );
+        } catch (_) {
+          // No valid session - go to login
+          state = state.copyWith(status: AuthStatus.unauthenticated);
+        }
       }
+    } catch (_) {
+      // isAuthenticated() itself threw — fall back to unauthenticated
+      state = state.copyWith(status: AuthStatus.unauthenticated);
     }
   }
 
   Future<void> requestOTP(String phoneNumber) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
-      await _authRepository.requestOtp(phoneNumber);
+      final result = await _authRepository.requestOtp(phoneNumber);
+
+      if (result['is_authenticated'] == true) {
+        final tokenData = result['token_data'] as Map<String, dynamic>;
+        final userMap = tokenData['user'] as Map<String, dynamic>;
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: User(
+            id: userMap['id'] as String,
+            phoneNumber: userMap['phone_number'] as String?,
+            name: userMap['nickname'] as String?,
+            isAnonymous: userMap['is_anonymous'] as bool? ?? false,
+          ),
+        );
+        return;
+      }
+
       state = state.copyWith(
         status: AuthStatus.otpSent,
         phoneNumber: phoneNumber,
@@ -163,7 +222,21 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    // Clear tokens from secure storage (always runs even if backend call fails)
     await _authRepository.logout();
-    state = AuthState.initial();
+    // Reset state to unauthenticated — router redirectListenable fires and
+    // sends the user to /phone-entry immediately. Next cold launch also lands
+    // on /phone-entry because the token is gone from secure storage.
+    state = AuthState(status: AuthStatus.unauthenticated);
+
+    // Clear any cached user data or auth-related state
+    // This ensures complete logout cleanup
+    _clearAuthState();
+  }
+
+  void _clearAuthState() {
+    // Clear any additional auth-related state if needed
+    // This method can be extended to clear other cached data
+    state = state.copyWith(user: null, phoneNumber: null, error: null);
   }
 }

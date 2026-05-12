@@ -8,7 +8,7 @@ class OtpRequest extends BaseModel {
 
   const OtpRequest({
     required this.phoneNumber,
-    this.countryCode = '+1',
+    this.countryCode = '+255',
   });
 
   @override

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude flutter_secure_storage data from backup -->
+    <exclude domain="sharedpref" path="flutter_secure_storage.xml" />
+    <exclude domain="sharedpref" path="flutter_secure_storage" />
+    <!-- Exclude any other sensitive authentication data -->
+    <exclude domain="sharedpref" path="auth_tokens" />
+    <exclude domain="database" path="secure_storage" />
+</full-backup-content>

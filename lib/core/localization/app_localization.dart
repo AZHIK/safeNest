@@ -231,6 +231,10 @@ class AppTranslations {
       AppLanguage.english: "Maps Integration Placeholder",
       AppLanguage.swahili: "Eneo la Ramani",
     },
+    'noCentersFound': {
+      AppLanguage.english: "No support centers found nearby.",
+      AppLanguage.swahili: "Hakuna vituo vya msaada karibu.",
+    },
     'searchCentersHint': {
       AppLanguage.english: "Search for help centers...",
       AppLanguage.swahili: "Tafuta vituo vya msaada...",

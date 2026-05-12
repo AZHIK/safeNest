@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_client.dart';
 import '../api/api_constants.dart';
@@ -27,7 +28,7 @@ class AuthRepository extends BaseRepository {
   /// Request OTP for phone verification
   Future<Map<String, dynamic>> requestOtp(
     String phoneNumber, {
-    String countryCode = '+1',
+    String countryCode = '+255',
   }) async {
     return execute(() async {
       final response = await _apiClient.post(
@@ -37,7 +38,21 @@ class AuthRepository extends BaseRepository {
           countryCode: countryCode,
         ).toJson(),
       );
-      return response.data as Map<String, dynamic>;
+      final data = response.data as Map<String, dynamic>;
+
+      if (data['is_authenticated'] == true) {
+        final tokenResponse = TokenResponse.fromJson(
+          data['token_data'] as Map<String, dynamic>,
+        );
+        await _tokenStorage.saveTokens(
+          accessToken: tokenResponse.accessToken,
+          refreshToken: tokenResponse.refreshToken,
+          expiresInSeconds: tokenResponse.expiresIn,
+          userId: tokenResponse.user.id,
+        );
+      }
+
+      return data;
     });
   }
 
@@ -95,7 +110,8 @@ class AuthRepository extends BaseRepository {
     });
   }
 
-  /// Refresh access token
+  /// Refresh access token with refresh token rotation support
+  /// Backend may return a new refresh token for enhanced security
   Future<TokenResponse> refreshAccessToken() async {
     final storedRefreshToken = await _tokenStorage.getRefreshToken();
     if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
@@ -105,17 +121,22 @@ class AuthRepository extends BaseRepository {
     return execute(() async {
       final response = await _apiClient.post(
         ApiConstants.refreshToken,
-        data: {'refresh_token': storedRefreshToken},
+        data: RefreshTokenRequest(refreshToken: storedRefreshToken).toJson(),
       );
       final tokenResponse = TokenResponse.fromJson(
         response.data as Map<String, dynamic>,
       );
+
+      // Save new tokens - supports refresh token rotation
+      // If backend returns same refresh token, it's still saved
+      // If backend returns new refresh token, it's rotated
       await _tokenStorage.saveTokens(
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken,
         expiresInSeconds: tokenResponse.expiresIn,
         userId: tokenResponse.user.id,
       );
+
       return tokenResponse;
     });
   }
@@ -222,12 +243,12 @@ class AuthRepository extends BaseRepository {
     );
   }
 
-  /// Logout - clear tokens and notify backend
+  /// Logout - invalidate server session then clear local tokens
   Future<void> logout() async {
     try {
       await _apiClient.post(ApiConstants.logout);
     } catch (_) {
-      // Ignore backend errors on logout
+      // Ignore backend errors — always clear local tokens regardless
     } finally {
       await _tokenStorage.clearTokens();
     }
@@ -251,6 +272,12 @@ class AuthRepository extends BaseRepository {
       return false;
     }
     return true;
+  }
+
+  /// Clear only local token storage (no network call).
+  /// Use during startup when the backend may be unreachable.
+  Future<void> clearStoredTokens() async {
+    await _tokenStorage.clearTokens();
   }
 
   /// Get access token from storage

@@ -13,7 +13,7 @@ abstract class AuthService {
   /// Returns [OtpRequestResult] with expiration info
   Future<OtpRequestResult> requestOtp(
     String phoneNumber, {
-    String countryCode = '+1',
+    String countryCode = '+255',
   });
 
   /// Verify OTP and authenticate user
