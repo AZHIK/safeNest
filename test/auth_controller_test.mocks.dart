@@ -5,11 +5,12 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i5;
 
-import 'package:flutter/foundation.dart' as _i6;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:SafeNest/features/auth/data/auth_service.dart' as _i4;
-import 'package:SafeNest/features/auth/domain/auth_models.dart' as _i2;
+import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:SafeNest/core/models/auth_model.dart' as _i2;
+import 'package:SafeNest/core/models/trusted_contact_model.dart' as _i4;
+import 'package:SafeNest/core/models/user_model.dart' as _i3;
+import 'package:SafeNest/core/repositories/auth_repository.dart' as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -26,362 +27,250 @@ import 'package:SafeNest/features/auth/domain/auth_models.dart' as _i2;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-class _FakeAuthSession_0 extends _i1.SmartFake implements _i2.AuthSession {
-  _FakeAuthSession_0(Object parent, Invocation parentInvocation)
+class _FakeTokenResponse_0 extends _i1.SmartFake implements _i2.TokenResponse {
+  _FakeTokenResponse_0(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeIOSOptions_1 extends _i1.SmartFake implements _i3.IOSOptions {
-  _FakeIOSOptions_1(Object parent, Invocation parentInvocation)
+class _FakeAnonymousSessionResponse_1 extends _i1.SmartFake
+    implements _i2.AnonymousSessionResponse {
+  _FakeAnonymousSessionResponse_1(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeAndroidOptions_2 extends _i1.SmartFake
-    implements _i3.AndroidOptions {
-  _FakeAndroidOptions_2(Object parent, Invocation parentInvocation)
+class _FakeUser_2 extends _i1.SmartFake implements _i3.User {
+  _FakeUser_2(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeLinuxOptions_3 extends _i1.SmartFake implements _i3.LinuxOptions {
-  _FakeLinuxOptions_3(Object parent, Invocation parentInvocation)
+class _FakeTrustedContact_3 extends _i1.SmartFake
+    implements _i4.TrustedContact {
+  _FakeTrustedContact_3(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeWindowsOptions_4 extends _i1.SmartFake
-    implements _i3.WindowsOptions {
-  _FakeWindowsOptions_4(Object parent, Invocation parentInvocation)
+class _FakeFuture_4<T1> extends _i1.SmartFake implements _i5.Future<T1> {
+  _FakeFuture_4(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeWebOptions_5 extends _i1.SmartFake implements _i3.WebOptions {
-  _FakeWebOptions_5(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _FakeMacOsOptions_6 extends _i1.SmartFake implements _i3.MacOsOptions {
-  _FakeMacOsOptions_6(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-/// A class which mocks [AuthService].
+/// A class which mocks [AuthRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuthService extends _i1.Mock implements _i4.AuthService {
-  MockAuthService() {
+class MockAuthRepository extends _i1.Mock implements _i6.AuthRepository {
+  MockAuthRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<void> requestOTP(String? phoneNumber) =>
+  _i5.Future<Map<String, dynamic>> requestOtp(
+    String? phoneNumber, {
+    String? countryCode = '+255',
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#requestOTP, [phoneNumber]),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            Invocation.method(
+              #requestOtp,
+              [phoneNumber],
+              {#countryCode: countryCode},
+            ),
+            returnValue: _i5.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
           )
-          as _i5.Future<void>);
+          as _i5.Future<Map<String, dynamic>>);
 
   @override
-  _i5.Future<_i2.AuthSession> verifyOTP(String? phoneNumber, String? code) =>
+  _i5.Future<_i2.TokenResponse> verifyOtp(
+    String? phoneNumber,
+    String? otpCode, {
+    String? countryCode,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#verifyOTP, [phoneNumber, code]),
-            returnValue: _i5.Future<_i2.AuthSession>.value(
-              _FakeAuthSession_0(
+            Invocation.method(
+              #verifyOtp,
+              [phoneNumber, otpCode],
+              {#countryCode: countryCode},
+            ),
+            returnValue: _i5.Future<_i2.TokenResponse>.value(
+              _FakeTokenResponse_0(
                 this,
-                Invocation.method(#verifyOTP, [phoneNumber, code]),
+                Invocation.method(
+                  #verifyOtp,
+                  [phoneNumber, otpCode],
+                  {#countryCode: countryCode},
+                ),
               ),
             ),
           )
-          as _i5.Future<_i2.AuthSession>);
+          as _i5.Future<_i2.TokenResponse>);
 
   @override
-  _i5.Future<_i2.AuthSession> continueAnonymously() =>
+  _i5.Future<_i2.AnonymousSessionResponse> createAnonymousSession({
+    String? deviceFingerprint,
+    String? languagePreference = 'en',
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#continueAnonymously, []),
-            returnValue: _i5.Future<_i2.AuthSession>.value(
-              _FakeAuthSession_0(
+            Invocation.method(#createAnonymousSession, [], {
+              #deviceFingerprint: deviceFingerprint,
+              #languagePreference: languagePreference,
+            }),
+            returnValue: _i5.Future<_i2.AnonymousSessionResponse>.value(
+              _FakeAnonymousSessionResponse_1(
                 this,
-                Invocation.method(#continueAnonymously, []),
+                Invocation.method(#createAnonymousSession, [], {
+                  #deviceFingerprint: deviceFingerprint,
+                  #languagePreference: languagePreference,
+                }),
               ),
             ),
           )
-          as _i5.Future<_i2.AuthSession>);
+          as _i5.Future<_i2.AnonymousSessionResponse>);
 
   @override
-  _i5.Future<_i2.User?> getCurrentUser() =>
+  _i5.Future<_i2.TokenResponse> refreshAccessToken() =>
+      (super.noSuchMethod(
+            Invocation.method(#refreshAccessToken, []),
+            returnValue: _i5.Future<_i2.TokenResponse>.value(
+              _FakeTokenResponse_0(
+                this,
+                Invocation.method(#refreshAccessToken, []),
+              ),
+            ),
+          )
+          as _i5.Future<_i2.TokenResponse>);
+
+  @override
+  _i5.Future<_i3.User> getCurrentUser() =>
       (super.noSuchMethod(
             Invocation.method(#getCurrentUser, []),
-            returnValue: _i5.Future<_i2.User?>.value(),
-          )
-          as _i5.Future<_i2.User?>);
-
-  @override
-  _i5.Future<void> signOut() =>
-      (super.noSuchMethod(
-            Invocation.method(#signOut, []),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
-          )
-          as _i5.Future<void>);
-}
-
-/// A class which mocks [FlutterSecureStorage].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockFlutterSecureStorage extends _i1.Mock
-    implements _i3.FlutterSecureStorage {
-  MockFlutterSecureStorage() {
-    _i1.throwOnMissingStub(this);
-  }
-
-  @override
-  _i3.IOSOptions get iOptions =>
-      (super.noSuchMethod(
-            Invocation.getter(#iOptions),
-            returnValue: _FakeIOSOptions_1(this, Invocation.getter(#iOptions)),
-          )
-          as _i3.IOSOptions);
-
-  @override
-  _i3.AndroidOptions get aOptions =>
-      (super.noSuchMethod(
-            Invocation.getter(#aOptions),
-            returnValue: _FakeAndroidOptions_2(
-              this,
-              Invocation.getter(#aOptions),
+            returnValue: _i5.Future<_i3.User>.value(
+              _FakeUser_2(this, Invocation.method(#getCurrentUser, [])),
             ),
           )
-          as _i3.AndroidOptions);
+          as _i5.Future<_i3.User>);
 
   @override
-  _i3.LinuxOptions get lOptions =>
+  _i5.Future<_i3.User> updateProfile(_i3.UserProfileUpdate? update) =>
       (super.noSuchMethod(
-            Invocation.getter(#lOptions),
-            returnValue: _FakeLinuxOptions_3(
-              this,
-              Invocation.getter(#lOptions),
+            Invocation.method(#updateProfile, [update]),
+            returnValue: _i5.Future<_i3.User>.value(
+              _FakeUser_2(this, Invocation.method(#updateProfile, [update])),
             ),
           )
-          as _i3.LinuxOptions);
+          as _i5.Future<_i3.User>);
 
   @override
-  _i3.WindowsOptions get wOptions =>
+  _i5.Future<List<_i4.TrustedContact>> getTrustedContacts() =>
       (super.noSuchMethod(
-            Invocation.getter(#wOptions),
-            returnValue: _FakeWindowsOptions_4(
-              this,
-              Invocation.getter(#wOptions),
+            Invocation.method(#getTrustedContacts, []),
+            returnValue: _i5.Future<List<_i4.TrustedContact>>.value(
+              <_i4.TrustedContact>[],
             ),
           )
-          as _i3.WindowsOptions);
+          as _i5.Future<List<_i4.TrustedContact>>);
 
   @override
-  _i3.WebOptions get webOptions =>
+  _i5.Future<_i4.TrustedContact> addTrustedContact(
+    _i4.TrustedContactCreate? contact,
+  ) =>
       (super.noSuchMethod(
-            Invocation.getter(#webOptions),
-            returnValue: _FakeWebOptions_5(
-              this,
-              Invocation.getter(#webOptions),
+            Invocation.method(#addTrustedContact, [contact]),
+            returnValue: _i5.Future<_i4.TrustedContact>.value(
+              _FakeTrustedContact_3(
+                this,
+                Invocation.method(#addTrustedContact, [contact]),
+              ),
             ),
           )
-          as _i3.WebOptions);
+          as _i5.Future<_i4.TrustedContact>);
 
   @override
-  _i3.MacOsOptions get mOptions =>
+  _i5.Future<void> removeTrustedContact(String? contactId) =>
       (super.noSuchMethod(
-            Invocation.getter(#mOptions),
-            returnValue: _FakeMacOsOptions_6(
-              this,
-              Invocation.getter(#mOptions),
-            ),
-          )
-          as _i3.MacOsOptions);
-
-  @override
-  void registerListener({
-    required String? key,
-    required _i6.ValueChanged<String?>? listener,
-  }) => super.noSuchMethod(
-    Invocation.method(#registerListener, [], {#key: key, #listener: listener}),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void unregisterListener({
-    required String? key,
-    required _i6.ValueChanged<String?>? listener,
-  }) => super.noSuchMethod(
-    Invocation.method(#unregisterListener, [], {
-      #key: key,
-      #listener: listener,
-    }),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void unregisterAllListenersForKey({required String? key}) =>
-      super.noSuchMethod(
-        Invocation.method(#unregisterAllListenersForKey, [], {#key: key}),
-        returnValueForMissingStub: null,
-      );
-
-  @override
-  void unregisterAllListeners() => super.noSuchMethod(
-    Invocation.method(#unregisterAllListeners, []),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  _i5.Future<void> write({
-    required String? key,
-    required String? value,
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#write, [], {
-              #key: key,
-              #value: value,
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
+            Invocation.method(#removeTrustedContact, [contactId]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Future<String?> read({
-    required String? key,
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
+  _i5.Future<void> logout() =>
       (super.noSuchMethod(
-            Invocation.method(#read, [], {
-              #key: key,
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
-            returnValue: _i5.Future<String?>.value(),
+            Invocation.method(#logout, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i5.Future<String?>);
+          as _i5.Future<void>);
 
   @override
-  _i5.Future<bool> containsKey({
-    required String? key,
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
+  _i5.Future<bool> isAuthenticated() =>
       (super.noSuchMethod(
-            Invocation.method(#containsKey, [], {
-              #key: key,
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
+            Invocation.method(#isAuthenticated, []),
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
 
   @override
-  _i5.Future<void> delete({
-    required String? key,
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
+  _i5.Future<void> clearStoredTokens() =>
       (super.noSuchMethod(
-            Invocation.method(#delete, [], {
-              #key: key,
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
+            Invocation.method(#clearStoredTokens, []),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Future<Map<String, String>> readAll({
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
+  _i5.Future<String?> getAccessToken() =>
       (super.noSuchMethod(
-            Invocation.method(#readAll, [], {
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
-            returnValue: _i5.Future<Map<String, String>>.value(
-              <String, String>{},
-            ),
+            Invocation.method(#getAccessToken, []),
+            returnValue: _i5.Future<String?>.value(),
           )
-          as _i5.Future<Map<String, String>>);
+          as _i5.Future<String?>);
 
   @override
-  _i5.Future<void> deleteAll({
-    _i3.IOSOptions? iOptions,
-    _i3.AndroidOptions? aOptions,
-    _i3.LinuxOptions? lOptions,
-    _i3.WebOptions? webOptions,
-    _i3.MacOsOptions? mOptions,
-    _i3.WindowsOptions? wOptions,
-  }) =>
+  _i5.Future<T> execute<T>(_i5.Future<T> Function()? apiCall) =>
       (super.noSuchMethod(
-            Invocation.method(#deleteAll, [], {
-              #iOptions: iOptions,
-              #aOptions: aOptions,
-              #lOptions: lOptions,
-              #webOptions: webOptions,
-              #mOptions: mOptions,
-              #wOptions: wOptions,
-            }),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            Invocation.method(#execute, [apiCall]),
+            returnValue:
+                _i7.ifNotNull(
+                  _i7.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(#execute, [apiCall]),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_4<T>(this, Invocation.method(#execute, [apiCall])),
           )
-          as _i5.Future<void>);
+          as _i5.Future<T>);
 
   @override
-  _i5.Future<bool?> isCupertinoProtectedDataAvailable() =>
+  _i5.Future<T> executeWithFallback<T>({
+    required _i5.Future<T> Function()? apiCall,
+    required _i5.Future<T> Function()? localFallback,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#isCupertinoProtectedDataAvailable, []),
-            returnValue: _i5.Future<bool?>.value(),
+            Invocation.method(#executeWithFallback, [], {
+              #apiCall: apiCall,
+              #localFallback: localFallback,
+            }),
+            returnValue:
+                _i7.ifNotNull(
+                  _i7.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(#executeWithFallback, [], {
+                      #apiCall: apiCall,
+                      #localFallback: localFallback,
+                    }),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_4<T>(
+                  this,
+                  Invocation.method(#executeWithFallback, [], {
+                    #apiCall: apiCall,
+                    #localFallback: localFallback,
+                  }),
+                ),
           )
-          as _i5.Future<bool?>);
+          as _i5.Future<T>);
 }

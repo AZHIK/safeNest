@@ -1,72 +1,65 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:SafeNest/features/auth/presentation/auth_controller.dart';
-import 'package:SafeNest/features/auth/presentation/auth_state.dart';
 import 'package:SafeNest/features/auth/domain/auth_models.dart';
-import 'package:SafeNest/features/auth/data/auth_service.dart';
+import 'package:SafeNest/core/repositories/auth_repository.dart';
+import 'package:SafeNest/core/models/user_model.dart' as core_user;
 
 import 'auth_controller_test.mocks.dart';
 
-@GenerateMocks([AuthService, FlutterSecureStorage])
+@GenerateMocks([AuthRepository])
 void main() {
-  late MockAuthService mockAuthService;
-  late MockFlutterSecureStorage mockStorage;
+  late MockAuthRepository mockAuthRepository;
 
   setUp(() {
-    mockAuthService = MockAuthService();
-    mockStorage = MockFlutterSecureStorage();
+    mockAuthRepository = MockAuthRepository();
   });
 
   ProviderContainer createContainer() {
     return ProviderContainer(
       overrides: [
-        authServiceProvider.overrideWithValue(mockAuthService),
-        secureStorageProvider.overrideWithValue(mockStorage),
+        authRepositoryProvider.overrideWithValue(mockAuthRepository),
       ],
     );
   }
 
   test(
-    'should not restore anonymous session and should clear storage',
+    'should not restore session if isAuthenticated returns false and refresh fails',
     () async {
-      // Setup: storage has an anonymous session
-      when(
-        mockStorage.read(key: 'auth_token'),
-      ).thenAnswer((_) async => 'fake_token');
-      when(
-        mockStorage.read(key: 'user_id'),
-      ).thenAnswer((_) async => 'fake_uid');
-      when(
-        mockStorage.read(key: 'is_anonymous'),
-      ).thenAnswer((_) async => 'true');
+      when(mockAuthRepository.isAuthenticated()).thenAnswer((_) async => false);
+      when(mockAuthRepository.refreshAccessToken()).thenThrow(Exception('Refresh failed'));
 
       final container = createContainer();
 
       // Trigger build
       container.read(authControllerProvider);
 
-      await untilCalled(mockStorage.deleteAll());
+      // Wait a bit for async tasks to complete
+      await Future.delayed(const Duration(milliseconds: 50));
 
       expect(
         container.read(authControllerProvider).status,
         AuthStatus.unauthenticated,
       );
-      verify(mockStorage.deleteAll()).called(1);
     },
   );
 
   test('should restore authenticated session', () async {
-    // Setup: storage has an authenticated session
-    when(
-      mockStorage.read(key: 'auth_token'),
-    ).thenAnswer((_) async => 'fake_token');
-    when(mockStorage.read(key: 'user_id')).thenAnswer((_) async => 'fake_uid');
-    when(
-      mockStorage.read(key: 'is_anonymous'),
-    ).thenAnswer((_) async => 'false');
+    final fakeUser = core_user.User(
+      id: 'fake_uid',
+      phoneNumber: 'fake_phone',
+      isAnonymous: false,
+      isVerified: true,
+      languagePreference: 'en',
+      status: 'active',
+      createdAt: DateTime.now(),
+      nickname: 'fake_name',
+    );
+
+    when(mockAuthRepository.isAuthenticated()).thenAnswer((_) async => true);
+    when(mockAuthRepository.getCurrentUser()).thenAnswer((_) async => fakeUser);
 
     final container = createContainer();
 
@@ -83,6 +76,9 @@ void main() {
       container.read(authControllerProvider).status,
       AuthStatus.authenticated,
     );
-    verifyNever(mockStorage.deleteAll());
+    expect(
+      container.read(authControllerProvider).user?.id,
+      'fake_uid',
+    );
   });
 }

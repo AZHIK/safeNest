@@ -120,67 +120,74 @@ class _SosScreenState extends ConsumerState<SosScreen> {
         child: Column(
           children: [
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildIcon(isSent),
-                    const SizedBox(height: AppSizes.p32),
-                    Text(
-                      _getTitle(lang),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: AppSizes.fontHeadline,
-                        fontWeight: FontWeight.bold,
-                        color: isSent
-                            ? Colors.white
-                            : AppColors.textPrimaryDark,
-                      ),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p32,
+                      vertical: AppSizes.p16,
                     ),
-                    const SizedBox(height: AppSizes.p16),
-                    Text(
-                      _getSubtitle(lang),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: AppSizes.fontSubtitle,
-                        color: isSent
-                            ? Colors.white.withValues(alpha: 0.9)
-                            : AppColors.textSecondaryDark,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.p48),
-                    if (_status == SosStatus.idle) ...[
-                      if (_errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                          child: Text(
-                            _errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.error,
-                              fontSize: AppSizes.fontSmall,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildIcon(isSent),
+                        const SizedBox(height: AppSizes.p32),
+                        Text(
+                          _getTitle(lang),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: AppSizes.fontHeadline,
+                            fontWeight: FontWeight.bold,
+                            color: isSent
+                                ? Colors.white
+                                : AppColors.textPrimaryDark,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.p16),
+                        Text(
+                          _getSubtitle(lang),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: AppSizes.fontSubtitle,
+                            color: isSent
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : AppColors.textSecondaryDark,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.p48),
+                        if (_status == SosStatus.idle) ...[
+                          if (_errorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: AppSizes.p16),
+                              child: Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: AppSizes.fontSmall,
+                                ),
+                              ),
+                            ),
+                          _SosButton(onPressed: _triggerSos),
+                        ] else if (_status == SosStatus.sending)
+                          const CircularProgressIndicator(color: AppColors.error)
+                        else if (_status == SosStatus.sent)
+                          ElevatedButton.icon(
+                            onPressed: _cancelSos,
+                            icon: const Icon(Icons.cancel),
+                            label: const Text('Cancel SOS'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.success,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.p24,
+                                vertical: AppSizes.p12,
+                              ),
                             ),
                           ),
-                        ),
-                      _SosButton(onPressed: _triggerSos),
-                    ] else if (_status == SosStatus.sending)
-                      const CircularProgressIndicator(color: AppColors.error)
-                    else if (_status == SosStatus.sent)
-                      ElevatedButton.icon(
-                        onPressed: _cancelSos,
-                        icon: const Icon(Icons.cancel),
-                        label: const Text('Cancel SOS'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.success,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.p24,
-                            vertical: AppSizes.p12,
-                          ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

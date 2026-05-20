@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,6 +16,7 @@ import '../../core/repositories/report_repository.dart';
 import '../../core/models/report_model.dart';
 import '../../services/location_service.dart';
 import '../../services/audio_recording_service.dart';
+import '../../core/utils/encryption_helper.dart';
 
 enum ReportStatus { idle, submitting, success, error }
 
@@ -199,22 +201,16 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
 
       // Create report with proper payload format
       final reportRepo = ref.read(reportRepositoryProvider);
+      final encryptionHelper = EncryptionHelperImpl();
       final now = DateTime.now();
 
-      // Encode description as base64 (placeholder for actual encryption)
-      final descriptionBytes = utf8.encode(_reportController.text.trim());
-      final descriptionBase64 = base64Encode(descriptionBytes);
+      // Encrypt description using real AES-GCM
+      final encryptedDesc = await encryptionHelper.encrypt(_reportController.text.trim());
 
       final reportData = IncidentReportCreate(
         reportType: 'assault',
-        descriptionEncrypted: descriptionBase64,
-        encryptionMetadata: {
-          'algorithm': 'AES-256-GCM',
-          'key_id': 'user_key_${now.millisecondsSinceEpoch}',
-          'iv': base64Encode(
-            utf8.encode('nonce_${now.millisecondsSinceEpoch}'),
-          ),
-        },
+        descriptionEncrypted: encryptedDesc['encrypted_data'],
+        encryptionMetadata: encryptedDesc['metadata'],
         isAnonymous: _isAnonymous,
         followUpPreference: _isAnonymous ? 'none' : 'email',
         incidentLatitude: position?.latitude,
@@ -228,19 +224,32 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
 
       // Upload evidence files
       for (final evidence in _evidenceFiles) {
-        await reportRepo.uploadEvidence(
-          reportId: _reportId!,
-          fileType: evidence.type,
-          fileData: evidence.bytes,
-          encryptionMetadata: '{}',
-          fileHashSha256:
-              'placeholder_hash_${DateTime.now().millisecondsSinceEpoch}',
-          hasGpsMetadata: position != null,
-          gpsLatitude: position?.latitude,
-          gpsLongitude: position?.longitude,
-          recordedAt: DateTime.now(),
-          mimeType: evidence.mimeType,
-        );
+        try {
+          // Generate proper SHA256 hash
+          final hash = sha256.convert(evidence.bytes);
+          final fileHash = hash.toString();
+
+          // Encrypt evidence file bytes using real AES-GCM
+          final encryptedEvidence = await encryptionHelper.encryptBytes(evidence.bytes);
+          final encMetadata = jsonEncode(encryptedEvidence['metadata']);
+          final encryptedBytes = base64.decode(encryptedEvidence['encrypted_data']);
+
+          await reportRepo.uploadEvidence(
+            reportId: _reportId!,
+            fileType: evidence.type,
+            fileData: encryptedBytes,
+            encryptionMetadata: encMetadata,
+            fileHashSha256: fileHash,
+            hasGpsMetadata: position != null,
+            gpsLatitude: position?.latitude,
+            gpsLongitude: position?.longitude,
+            recordedAt: DateTime.now(),
+            mimeType: evidence.mimeType,
+          );
+        } catch (e) {
+          print('Failed to upload evidence: ${e.toString()}');
+          // Continue with other files even if one fails
+        }
       }
 
       if (mounted) {
