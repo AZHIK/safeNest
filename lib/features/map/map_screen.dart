@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/localization/app_localization.dart';
 import '../../core/models/support_center_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../messaging/messaging_controller.dart';
 import 'map_controller.dart';
 
 class MapFilterNotifier extends Notifier<String> {
@@ -305,6 +307,26 @@ class MapScreen extends ConsumerWidget {
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: AppSizes.p8),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () =>
+                                            _startChat(context, ref, center),
+                                        icon: const Icon(
+                                          Icons.message_outlined,
+                                          size: 18,
+                                        ),
+                                        label: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            AppTranslations.get(
+                                              'messageButton',
+                                              lang,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -323,5 +345,31 @@ class MapScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _startChat(
+    BuildContext context,
+    WidgetRef ref,
+    SupportCenterResponse center,
+  ) async {
+    try {
+      final controller = ref.read(messagingControllerProvider.notifier);
+      final conversation = await controller.createConversation(
+        title: center.name,
+        supportCenterId: center.id,
+      );
+      if (context.mounted) {
+        context.push('/messages/${conversation.id}');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start chat: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

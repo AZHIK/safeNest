@@ -117,8 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ChatListScreen(),
                 routes: [
                   GoRoute(
-                    path: 'detail',
-                    builder: (context, state) => const ChatDetailScreen(),
+                    path: ':id',
+                    builder: (context, state) {
+                      final conversationId = state.pathParameters['id'] ?? '';
+                      return ChatDetailScreen(conversationId: conversationId);
+                    },
                   ),
                 ],
               ),

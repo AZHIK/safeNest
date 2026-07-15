@@ -81,6 +81,7 @@ class MessagingRepository extends BaseRepository {
     String conversationId, {
     int skip = 0,
     int limit = 50,
+    String? currentUserId,
   }) async {
     return execute(() async {
       final response = await _apiClient.get(
@@ -89,19 +90,19 @@ class MessagingRepository extends BaseRepository {
       );
       final List<dynamic> data = response.data as List<dynamic>;
       return data
-          .map((e) => MessageResponse.fromJson(e as Map<String, dynamic>))
+          .map((e) => MessageResponse.fromJson(e as Map<String, dynamic>, currentUserId: currentUserId))
           .toList();
     });
   }
 
   /// Send a message to a conversation
-  Future<MessageResponse> sendMessage(MessageCreate message) async {
+  Future<MessageResponse> sendMessage(MessageCreate message, {String? currentUserId}) async {
     return execute(() async {
       final response = await _apiClient.post(
         ApiConstants.messagesSend,
         data: message.toJson(),
       );
-      return MessageResponse.fromJson(response.data as Map<String, dynamic>);
+      return MessageResponse.fromJson(response.data as Map<String, dynamic>, currentUserId: currentUserId);
     });
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/models/support_center_model.dart';
 import '../../core/repositories/support_center_repository.dart';
 import '../../services/location_service.dart';
@@ -20,9 +21,14 @@ class NearbyCentersNotifier extends AsyncNotifier<List<SupportCenterResponse>> {
     final repository = ref.read(supportCenterRepositoryProvider);
     final locationService = ref.read(locationServiceProvider);
 
-    final position = await locationService.getCurrentLocation();
+    Position? position;
+    for (int attempt = 0; attempt < 3; attempt++) {
+      position = await locationService.getCurrentLocation();
+      if (position != null) break;
+      if (attempt < 2) await Future.delayed(const Duration(seconds: 2));
+    }
+
     if (position == null) {
-      // Fallback or empty if location denied
       return [];
     }
 

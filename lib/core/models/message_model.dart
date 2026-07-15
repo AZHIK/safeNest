@@ -59,14 +59,16 @@ class ConversationResponse extends BaseModel {
 /// Conversation Participant Model
 class ConversationParticipant extends BaseModel {
   final String id;
-  final String userId;
+  final String? userId;
+  final String? operatorUserId;
   final String role;
   final DateTime joinedAt;
   final DateTime? lastReadAt;
 
   const ConversationParticipant({
     required this.id,
-    required this.userId,
+    this.userId,
+    this.operatorUserId,
     required this.role,
     required this.joinedAt,
     this.lastReadAt,
@@ -75,7 +77,8 @@ class ConversationParticipant extends BaseModel {
   factory ConversationParticipant.fromJson(Map<String, dynamic> json) {
     return ConversationParticipant(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      userId: json['user_id'] as String?,
+      operatorUserId: json['operator_user_id'] as String?,
       role: json['role'] as String,
       joinedAt: DateTime.parse(json['joined_at'] as String),
       lastReadAt: json['last_read_at'] != null
@@ -89,6 +92,7 @@ class ConversationParticipant extends BaseModel {
     return {
       'id': id,
       'user_id': userId,
+      'operator_user_id': operatorUserId,
       'role': role,
       'joined_at': joinedAt.toIso8601String(),
       'last_read_at': lastReadAt?.toIso8601String(),
@@ -171,6 +175,7 @@ class MessageResponse extends BaseModel {
   final String id;
   final String conversationId;
   final String? senderId;
+  final String? senderOperatorId;
   final String encryptedContent;
   final String encryptionMetadata;
   final String contentType;
@@ -181,11 +186,13 @@ class MessageResponse extends BaseModel {
   final bool isDeleted;
   final DateTime serverCreatedAt;
   final DateTime? clientCreatedAt;
+  final bool isMe;
 
   const MessageResponse({
     required this.id,
     required this.conversationId,
     this.senderId,
+    this.senderOperatorId,
     required this.encryptedContent,
     required this.encryptionMetadata,
     required this.contentType,
@@ -196,13 +203,18 @@ class MessageResponse extends BaseModel {
     required this.isDeleted,
     required this.serverCreatedAt,
     this.clientCreatedAt,
+    this.isMe = false,
   });
 
-  factory MessageResponse.fromJson(Map<String, dynamic> json) {
+  bool get isFromMe => isMe || (senderId == null && senderOperatorId == null);
+
+  factory MessageResponse.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
+    final sid = json['sender_id'] as String?;
     return MessageResponse(
       id: json['id'] as String,
       conversationId: json['conversation_id'] as String,
-      senderId: json['sender_id'] as String?,
+      senderId: sid,
+      senderOperatorId: json['sender_operator_id'] as String?,
       encryptedContent: json['encrypted_content'] as String,
       encryptionMetadata: json['encryption_metadata'] as String,
       contentType: json['content_type'] as String,
@@ -217,6 +229,7 @@ class MessageResponse extends BaseModel {
       clientCreatedAt: json['client_created_at'] != null
           ? DateTime.parse(json['client_created_at'] as String)
           : null,
+      isMe: sid != null && currentUserId != null && sid == currentUserId,
     );
   }
 
@@ -226,6 +239,7 @@ class MessageResponse extends BaseModel {
       'id': id,
       'conversation_id': conversationId,
       'sender_id': senderId,
+      'sender_operator_id': senderOperatorId,
       'encrypted_content': encryptedContent,
       'encryption_metadata': encryptionMetadata,
       'content_type': contentType,

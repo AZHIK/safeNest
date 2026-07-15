@@ -277,6 +277,14 @@ class AppTranslations {
       AppLanguage.english: "Type a message...",
       AppLanguage.swahili: "Andika ujumbe...",
     },
+    'messageButton': {
+      AppLanguage.english: "Message",
+      AppLanguage.swahili: "Tuma Ujumbe",
+    },
+    'messagingSupport': {
+      AppLanguage.english: "Message Support",
+      AppLanguage.swahili: "Tuma Ujumbe kwa Msaada",
+    },
     // Training
     'emergencyActions': {
       AppLanguage.english: "Emergency Actions",
