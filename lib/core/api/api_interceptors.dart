@@ -31,7 +31,14 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
       }
     }
 
-    options.headers['Content-Type'] = 'application/json';
+    final isMultipart = options.data is FormData;
+    if (isMultipart) {
+      options.headers.remove('Content-Type');
+      options.contentType = null;
+    } else {
+      options.headers['Content-Type'] = 'application/json';
+      options.contentType = Headers.jsonContentType;
+    }
     options.headers['Accept'] = 'application/json';
 
     handler.next(options);

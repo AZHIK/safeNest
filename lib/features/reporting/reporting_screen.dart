@@ -223,6 +223,8 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
       _reportId = reportResponse.id;
 
       // Upload evidence files
+      var successfulEvidenceUploads = 0;
+      final failedEvidenceUploads = <String>[];
       for (final evidence in _evidenceFiles) {
         try {
           // Generate proper SHA256 hash
@@ -246,21 +248,38 @@ class _ReportingScreenState extends ConsumerState<ReportingScreen> {
             recordedAt: DateTime.now(),
             mimeType: evidence.mimeType,
           );
+          successfulEvidenceUploads += 1;
         } catch (e) {
           print('Failed to upload evidence: ${e.toString()}');
-          // Continue with other files even if one fails
+          failedEvidenceUploads.add(evidence.name);
         }
       }
 
       if (mounted) {
         setState(() => _status = ReportStatus.success);
+        final uploadedEvidenceCount = successfulEvidenceUploads;
+        final totalEvidenceCount = _evidenceFiles.length;
+        final evidenceMessage = totalEvidenceCount == 0
+            ? ''
+            : failedEvidenceUploads.isEmpty
+            ? ' Uploaded $uploadedEvidenceCount evidence file(s).'
+            : ' Uploaded $uploadedEvidenceCount of $totalEvidenceCount evidence file(s).';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Report #${reportResponse.reportNumber} submitted successfully.',
+              'Report #${reportResponse.reportNumber} submitted successfully.$evidenceMessage',
             ),
           ),
         );
+        if (failedEvidenceUploads.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Some evidence files failed to upload: ${failedEvidenceUploads.join(', ')}',
+              ),
+            ),
+          );
+        }
         // Clear form after successful submission
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
