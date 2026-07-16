@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../core/api/api_constants.dart';
@@ -25,17 +26,18 @@ class WebSocketChatService {
   final TokenStorageService _tokenStorage = TokenStorageService();
   final _eventController = StreamController<WsEvent>.broadcast();
   Timer? _heartbeatTimer;
-  String? _currentToken;
+  int _reconnectAttempts = 0;
+  int _maxReconnectAttempts = 10;
+  bool _disposed = false;
+  Timer? _reconnectTimer;
 
   Stream<WsEvent> get events => _eventController.stream;
   bool get isConnected => _channel != null;
 
   Future<void> connect() async {
-    if (_channel != null) return;
+    if (_channel != null || _disposed) return;
     final token = await _tokenStorage.getAccessToken();
     if (token == null || token.isEmpty) return;
-
-    _currentToken = token;
 
     final wsUrl = ApiConstants.baseUrl
         .replaceFirst('http://', 'ws://')
@@ -47,6 +49,7 @@ class WebSocketChatService {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       await _channel!.ready;
 
+      _reconnectAttempts = 0;
       _startHeartbeat();
 
       _channel!.stream.listen(
@@ -63,12 +66,31 @@ class WebSocketChatService {
         onDone: () {
           _stopHeartbeat();
           _channel = null;
+          _scheduleReconnect();
         },
       );
     } catch (e) {
       _channel = null;
+      _scheduleReconnect();
       rethrow;
     }
+  }
+
+  void _scheduleReconnect() {
+    if (_disposed) return;
+    if (_reconnectAttempts >= _maxReconnectAttempts) return;
+    if (_reconnectTimer?.isActive ?? false) return;
+
+    _reconnectAttempts++;
+    // Exponential backoff with jitter
+    final baseDelay = min(1000 * pow(2, _reconnectAttempts - 1).toInt(), 30000);
+    final jitter = Random().nextInt(1000);
+    final delay = baseDelay + jitter;
+
+    _reconnectTimer = Timer(Duration(milliseconds: delay), () {
+      _channel = null;
+      connect();
+    });
   }
 
   void _handleMessage(Map<String, dynamic> message) {
@@ -158,6 +180,8 @@ class WebSocketChatService {
   }
 
   Future<void> disconnect() async {
+    _disposed = true;
+    _reconnectTimer?.cancel();
     _stopHeartbeat();
     await _channel?.sink.close();
     _channel = null;

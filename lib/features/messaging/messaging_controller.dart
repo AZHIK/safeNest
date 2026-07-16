@@ -15,6 +15,7 @@ class MessagingState {
   final ConversationResponse? selectedConversation;
   final List<MessageResponse> messages;
   final bool messagesLoading;
+  final String? messagesError;
 
   final bool sending;
   final String? typingUserId;
@@ -26,6 +27,7 @@ class MessagingState {
     this.selectedConversation,
     this.messages = const [],
     this.messagesLoading = false,
+    this.messagesError,
     this.sending = false,
     this.typingUserId,
   });
@@ -37,9 +39,11 @@ class MessagingState {
     ConversationResponse? selectedConversation,
     List<MessageResponse>? messages,
     bool? messagesLoading,
+    String? messagesError,
     bool? sending,
     String? typingUserId,
     bool clearError = false,
+    bool clearMessagesError = false,
   }) {
     return MessagingState(
       conversations: conversations ?? this.conversations,
@@ -50,6 +54,7 @@ class MessagingState {
           selectedConversation ?? this.selectedConversation,
       messages: messages ?? this.messages,
       messagesLoading: messagesLoading ?? this.messagesLoading,
+      messagesError: clearMessagesError ? null : messagesError ?? this.messagesError,
       sending: sending ?? this.sending,
       typingUserId: typingUserId ?? this.typingUserId,
     );
@@ -66,17 +71,20 @@ class MessagingController extends Notifier<MessagingState> {
   late WebSocketChatService _ws;
   StreamSubscription<WsEvent>? _wsSubscription;
   Timer? _typingDebounce;
-  bool _isTyping = false;
   String? _currentUserId;
 
   @override
   MessagingState build() {
     _repo = ref.watch(messagingRepositoryProvider);
     _ws = ref.watch(wsChatServiceProvider);
-    TokenStorageService().getUserId().then((id) => _currentUserId = id);
+    _initUserId();
     _connectWebSocket();
     loadConversations();
     return const MessagingState();
+  }
+
+  Future<void> _initUserId() async {
+    _currentUserId = await TokenStorageService().getUserId();
   }
 
   void _connectWebSocket() {
@@ -116,11 +124,21 @@ class MessagingController extends Notifier<MessagingState> {
       if (exists) return;
 
       final senderId = data['sender_id'] as String?;
+      final senderOperatorId = data['sender_operator_id'] as String?;
+      final isOperatorSender = data['is_operator_sender'] as bool? ?? false;
+
+      final bool isMe;
+      if (isOperatorSender) {
+        isMe = senderOperatorId != null && senderOperatorId == _currentUserId;
+      } else {
+        isMe = senderId != null && senderId == _currentUserId;
+      }
+
       final msg = MessageResponse(
         id: messageId,
         conversationId: conversationId,
         senderId: senderId,
-        senderOperatorId: data['sender_operator_id'] as String?,
+        senderOperatorId: senderOperatorId,
         encryptedContent: data['encrypted_content'] as String? ?? '',
         encryptionMetadata: data['encryption_metadata'] as String? ?? '',
         contentType: data['content_type'] as String? ?? 'text',
@@ -133,7 +151,7 @@ class MessagingController extends Notifier<MessagingState> {
         serverCreatedAt: data['server_created_at'] != null
             ? DateTime.tryParse(data['server_created_at'] as String) ?? DateTime.now()
             : DateTime.now(),
-        isMe: senderId != null && senderId == _currentUserId,
+        isMe: isMe,
       );
       state = state.copyWith(
         messages: [...state.messages, msg],
@@ -197,6 +215,7 @@ class MessagingController extends Notifier<MessagingState> {
       messages: [],
       messagesLoading: true,
       typingUserId: null,
+      clearMessagesError: true,
     );
 
     _ws.subscribeToConversation(conversation.id);
@@ -211,7 +230,7 @@ class MessagingController extends Notifier<MessagingState> {
     } catch (e) {
       state = state.copyWith(
         messagesLoading: false,
-        error: e.toString(),
+        messagesError: e.toString(),
       );
     }
   }
@@ -263,6 +282,19 @@ class MessagingController extends Notifier<MessagingState> {
     List<String>? participantIds,
     String? supportCenterId,
   }) async {
+    // Check for existing conversation with this support center
+    if (supportCenterId != null) {
+      final existing = state.conversations.where((c) {
+        return c.participants?.any((p) =>
+            p.operatorUserId == supportCenterId ||
+            p.userId == supportCenterId) ?? false;
+      }).firstOrNull;
+      if (existing != null) {
+        selectConversation(existing);
+        return existing;
+      }
+    }
+
     final request = ConversationCreate(
       title: title,
       participantIds: participantIds,
@@ -274,10 +306,9 @@ class MessagingController extends Notifier<MessagingState> {
     return conversation;
   }
 
-  @override
   void dispose() {
     _wsSubscription?.cancel();
     _typingDebounce?.cancel();
-    _ws.disconnect();
+    _ws.dispose();
   }
 }

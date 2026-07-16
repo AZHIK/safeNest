@@ -285,6 +285,26 @@ class AppTranslations {
       AppLanguage.english: "Message Support",
       AppLanguage.swahili: "Tuma Ujumbe kwa Msaada",
     },
+    'startChat': {
+      AppLanguage.english: "Start a Chat",
+      AppLanguage.swahili: "Anza Mazungumzo",
+    },
+    'selectCenter': {
+      AppLanguage.english: "Select a Support Center",
+      AppLanguage.swahili: "Chagua Kituo cha Msaada",
+    },
+    'loadingCenters': {
+      AppLanguage.english: "Loading support centers...",
+      AppLanguage.swahili: "Inapakia vituo vya msaada...",
+    },
+    'retry': {
+      AppLanguage.english: "Retry",
+      AppLanguage.swahili: "Jaribu tena",
+    },
+    'failedStartChat': {
+      AppLanguage.english: "Failed to start chat",
+      AppLanguage.swahili: "Imeshindwa kuanza mazungumzo",
+    },
     // Training
     'emergencyActions': {
       AppLanguage.english: "Emergency Actions",
