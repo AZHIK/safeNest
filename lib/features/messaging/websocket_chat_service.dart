@@ -30,6 +30,7 @@ class WebSocketChatService {
   int _maxReconnectAttempts = 10;
   bool _disposed = false;
   Timer? _reconnectTimer;
+  final Set<String> _subscribedConversations = {};
 
   Stream<WsEvent> get events => _eventController.stream;
   bool get isConnected => _channel != null;
@@ -69,10 +70,19 @@ class WebSocketChatService {
           _scheduleReconnect();
         },
       );
+      
+      // Re-subscribe to conversations after successful connection
+      _resubscribeConversations();
     } catch (e) {
       _channel = null;
       _scheduleReconnect();
       rethrow;
+    }
+  }
+
+  void _resubscribeConversations() {
+    for (final convId in _subscribedConversations) {
+      subscribeToConversation(convId);
     }
   }
 
@@ -132,12 +142,14 @@ class WebSocketChatService {
   }
 
   void subscribeToConversation(String conversationId) {
+    _subscribedConversations.add(conversationId);
     _sendMessage('subscribe_conversation', {
       'conversation_id': conversationId,
     });
   }
 
   void unsubscribeFromConversation(String conversationId) {
+    _subscribedConversations.remove(conversationId);
     _sendMessage('unsubscribe_conversation', {
       'conversation_id': conversationId,
     });
