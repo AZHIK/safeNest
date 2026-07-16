@@ -5,6 +5,8 @@ import '../../core/models/message_model.dart';
 import '../../core/repositories/messaging_repository.dart';
 import '../../core/services/token_storage_service.dart';
 import '../../core/utils/encryption_helper.dart';
+import '../../features/auth/domain/auth_models.dart';
+import '../../features/auth/presentation/auth_controller.dart';
 import 'websocket_chat_service.dart';
 
 class MessagingState {
@@ -72,19 +74,49 @@ class MessagingController extends Notifier<MessagingState> {
   StreamSubscription<WsEvent>? _wsSubscription;
   Timer? _typingDebounce;
   String? _currentUserId;
+  bool _conversationsLoaded = false;
+  bool _isInitializing = false;
 
   @override
   MessagingState build() {
     _repo = ref.watch(messagingRepositoryProvider);
     _ws = ref.watch(wsChatServiceProvider);
-    _initUserId();
+    
+    // Watch auth state to reload conversations when user logs in/out
+    ref.listen(authControllerProvider, (_, next) {
+      if (next.status == AuthStatus.authenticated || next.status == AuthStatus.anonymous) {
+        _conversationsLoaded = false;
+        loadConversations(force: true);
+      } else if (next.status == AuthStatus.unauthenticated) {
+        _conversationsLoaded = false;
+        state = state.copyWith(conversations: [], messages: [], selectedConversation: null);
+      }
+    });
+    
     _connectWebSocket();
-    loadConversations();
+    if (!_conversationsLoaded && !_isInitializing) {
+      _initialize();
+    }
     return const MessagingState();
+  }
+
+  Future<void> _initialize() async {
+    _isInitializing = true;
+    await _initUserId();
+    await loadConversations();
+    _isInitializing = false;
   }
 
   Future<void> _initUserId() async {
     _currentUserId = await TokenStorageService().getUserId();
+  }
+
+  // Wait for user ID to be loaded (for API calls that need auth)
+  Future<String?> _ensureUserIdLoaded() async {
+    if (_currentUserId == null) {
+      await _initUserId();
+    }
+    return _currentUserId;
   }
 
   void _connectWebSocket() {
@@ -158,6 +190,7 @@ class MessagingController extends Notifier<MessagingState> {
       );
     }
 
+    // Refresh conversations list to update last message time
     loadConversations();
   }
 
@@ -189,10 +222,14 @@ class MessagingController extends Notifier<MessagingState> {
     state = state.copyWith(messages: updated);
   }
 
-  Future<void> loadConversations() async {
+  Future<void> loadConversations({bool force = false}) async {
+    if (!force && _conversationsLoaded && state.conversations.isNotEmpty) {
+      return;
+    }
     state = state.copyWith(conversationsLoading: true, clearError: true);
     try {
       final conversations = await _repo.getConversations();
+      _conversationsLoaded = true;
       state = state.copyWith(
         conversations: conversations,
         conversationsLoading: false,
@@ -206,6 +243,11 @@ class MessagingController extends Notifier<MessagingState> {
   }
 
   Future<void> selectConversation(ConversationResponse conversation) async {
+    // If already viewing this conversation, don't reload
+    if (state.selectedConversation?.id == conversation.id) {
+      return;
+    }
+
     if (state.selectedConversation != null) {
       _ws.unsubscribeFromConversation(state.selectedConversation!.id);
     }
@@ -221,6 +263,9 @@ class MessagingController extends Notifier<MessagingState> {
     _ws.subscribeToConversation(conversation.id);
 
     try {
+      // Ensure user ID is loaded before making API call
+      await _ensureUserIdLoaded();
+      
       final messages = await _repo.getMessages(conversation.id, currentUserId: _currentUserId);
       state = state.copyWith(
         messages: messages.reversed.toList(),
@@ -249,6 +294,9 @@ class MessagingController extends Notifier<MessagingState> {
         clientCreatedAt: DateTime.now(),
       );
 
+      // Ensure user ID is loaded before sending
+      await _ensureUserIdLoaded();
+      
       final response = await _repo.sendMessage(message, currentUserId: _currentUserId);
       final display = MessageResponse(
         id: response.id,
@@ -300,8 +348,12 @@ class MessagingController extends Notifier<MessagingState> {
       participantIds: participantIds,
       supportCenterId: supportCenterId,
     );
+    
+    // Ensure user ID is loaded before creating
+    await _ensureUserIdLoaded();
+    
     final conversation = await _repo.createConversation(request);
-    await loadConversations();
+    await loadConversations(force: true);
     selectConversation(conversation);
     return conversation;
   }
